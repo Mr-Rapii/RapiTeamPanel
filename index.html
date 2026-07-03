@@ -243,6 +243,26 @@
   .check-pop{animation:checkPop .5s cubic-bezier(.34,1.56,.64,1) both;}
   @keyframes checkPop{ from{opacity:0; transform:scale(0.4);} to{opacity:1; transform:scale(1);} }
 
+  /* Navigation buttons for member & admin */
+  .nav-links{
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
+  }
+  .nav-link-btn{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+    border-radius:8px; font-size:13px; font-weight:500;
+    background:var(--surface2); color:var(--text);
+    border:1px solid var(--line);
+    transition:background .15s, transform .12s;
+    text-decoration:none;
+  }
+  .nav-link-btn:hover{background:var(--surface);}
+  .nav-link-btn:active{transform:scale(0.97);}
+  .nav-link-btn-amber{
+    background:rgba(232,163,61,0.14); color:var(--amber);
+    border-color:rgba(232,163,61,0.35);
+  }
+  .nav-link-btn-amber:hover{background:rgba(232,163,61,0.22);}
+
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
   }
@@ -287,7 +307,10 @@ const palette = {
 };
 const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
 const pad = n => String(n).padStart(2,"0");
-const MAX_BASE64_BYTES = 850 * 1024; // batas aman di bawah limit 1MB per dokumen Firestore
+const MAX_BASE64_BYTES = 850 * 1024;
+
+// Upload photo using the provided ID
+const UPLOAD_PHOTO_ID = "48edaa743dba8ad51e9d8c0d52b208dd";
 
 function esc(str) {
   return String(str ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
@@ -310,17 +333,17 @@ const ROLE_META = {
   member: { label:"Member", icon:"users",       tone:"muted", desc:"Konfirmasi acara & kirim foto collab, tanpa login." },
 };
 
-/* ---------- App state (gabungan Panel Kendali + Kirim Foto Collab) ---------- */
+/* ---------- App state ---------- */
 let state = {
   ready: false,
   now: new Date(),
-  screen: "welcome", // "welcome" | "app"
-  role: null,        // "owner" | "admin" | "member"
-  tab: "acara",       // staff tabs: acara | foto | admin
-  memberTab: "acara", // member tabs: acara | foto
+  screen: "welcome",
+  role: null,
+  tab: "acara",
+  memberTab: "acara",
 
   accounts: [],
-  session: null, // staff login session {name, role}
+  session: null,
 
   loginName: "", loginPassword: "", loginError: "", showPw: false,
   pwCurrent: "", pwNew: "", pwMsg: "",
@@ -334,20 +357,18 @@ let state = {
   showMemberTutorial: true,
   notifPermission: (typeof Notification !== "undefined") ? Notification.permission : "unsupported",
 
-  // ---- Foto collab: sesi (diatur Admin/Owner) ----
-  fotoSession: null, // {judul,tanggal,jamMulai,jamSelesai,aktif}
+  fotoSession: null,
   photos: [],
   formJudul: "", formTanggal: "", formJamMulai: "07:00", formJamSelesai: "12:00", formAktif: true,
   savingSession: false, savedMsg: "",
 
-  // ---- Foto collab: form member ----
   fotoName: "", fotoFile: null, fotoPreviewUrl: null,
   fotoSubmitting: false, fotoSubmitError: "", fotoSubmitted: false,
   showFotoTutorial: true,
 };
 function setState(patch) { Object.assign(state, patch); render(); }
 
-/* ---------- Queue-ready notification (sound + toast + browser notification) ---------- */
+/* ---------- Queue-ready notification ---------- */
 function playQueueBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -390,7 +411,7 @@ function notifyQueueReady() {
       new Notification("RAPI TEAM", {
         body: "Owner udah kasih 10 permintaan masuk — boleh diterima sekaligus.",
       });
-    } catch (e) { /* some browsers require a service worker for this, ignore */ }
+    } catch (e) { /* ignore */ }
   }
 }
 async function enableQueueNotifications() {
@@ -402,7 +423,7 @@ async function enableQueueNotifications() {
   setState({ notifPermission: perm });
 }
 
-/* ---------- Small toast (dipakai buat feedback salin teks/link) ---------- */
+/* ---------- Small toast ---------- */
 function showToast(message, icon) {
   const el = document.createElement("div");
   el.className = "toast";
@@ -415,7 +436,7 @@ function showToast(message, icon) {
   }, 2200);
 }
 
-/* ---------- Global error surfacing (debug aid) ---------- */
+/* ---------- Error surfacing ---------- */
 window.addEventListener("error", (e) => {
   const banner = document.createElement("div");
   banner.style.cssText = "position:fixed; bottom:0; left:0; right:0; background:#D9705C; color:#0F1B22; font-size:12px; padding:10px 16px; z-index:9999; word-break:break-word;";
@@ -493,7 +514,7 @@ onSnapshot(photosRef, (snap) => {
   render();
 });
 
-/* ---------- Clock tick: update countdown & time-based badges without disrupting focus ---------- */
+/* ---------- Clock tick ---------- */
 let lastFotoStatus = null;
 let tickCount = 0;
 setInterval(() => {
@@ -504,7 +525,7 @@ setInterval(() => {
     lastFotoStatus = newFotoStatus;
     render();
   } else if (tickCount % 30 === 0) {
-    render(); // sesekali render penuh biar badge "Aktif 07.00-24.00" dkk ikut update
+    render();
   } else {
     tickFotoCountdown();
   }
@@ -574,7 +595,7 @@ function fotoCountdownBlock(status, s) {
   return "";
 }
 
-/* ---------- Kompres foto di browser (langsung disimpan sebagai base64 di Firestore) ---------- */
+/* ---------- Kompres foto ---------- */
 function loadImageFile(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -589,7 +610,7 @@ async function loadDrawableSource(file) {
     try {
       return await createImageBitmap(file, { imageOrientation: "from-image" });
     } catch (e) {
-      try { return await createImageBitmap(file); } catch (e2) { /* fallback di bawah */ }
+      try { return await createImageBitmap(file); } catch (e2) { /* fallback */ }
     }
   }
   return await loadImageFile(file);
@@ -655,6 +676,7 @@ async function submitFotoPhoto() {
       photoBase64: dataUrl,
       tanggal: s.tanggal,
       submittedAt: Date.now(),
+      uploadId: UPLOAD_PHOTO_ID,
     });
     setState({ fotoSubmitting:false, fotoSubmitted:true, fotoFile:null, fotoPreviewUrl:null });
   } catch (e) {
@@ -665,7 +687,7 @@ function resetFotoForm() {
   setState({ fotoName:"", fotoFile:null, fotoPreviewUrl:null, fotoSubmitError:"", fotoSubmitted:false });
 }
 
-/* ---------- Link & teks broadcast (foto collab) buat grup WA ---------- */
+/* ---------- Link & teks broadcast ---------- */
 function getShareLink() {
   return `${location.origin}${location.pathname}`;
 }
@@ -680,9 +702,19 @@ Halo semua! Yuk kirim foto collab kalian buat "${s.judul}" 🙌
 Kirim fotonya lewat link di bawah ini ya (bukan ke WA Admin langsung), biar nggak numpuk chat & nomor Admin aman dari spam:
 ${getShareLink()}
 
-Caranya gampang kok: buka link → pilih "Saya Member" → tab "Foto Collab" → isi nama → pilih 1 foto → tap Kirim Foto.
+📌 TUTORIAL CARA KIRIM FOTO (langsung dari HP, gak perlu bikin akun/login):
+1️⃣ Buka link di atas di browser HP kamu
+2️⃣ Pilih "Saya Member"
+3️⃣ Tap tombol "Foto Collab" di bagian atas
+4️⃣ Baca tutorial singkat cara kirim foto di halaman itu
+5️⃣ Isi kolom "Nama kamu" pakai nama lengkap/panggilan
+6️⃣ Tap kotak foto, pilih 1 foto collab dari galeri kamu
+7️⃣ Tap tombol "Kirim Foto" — tunggu sampai muncul tanda berhasil ✅
 
-⚠️ Kirim sebelum jam ${s.jamSelesai} ya, lewat dari itu link otomatis kadaluwarsa dan gak bisa kirim foto lagi.`;
+⚠️ Kirim sebelum jam ${s.jamSelesai} ya, lewat dari itu link otomatis kadaluwarsa dan gak bisa kirim foto lagi.
+
+📌 Kenapa kirim lewat link ini, bukan langsung ke WA Admin?
+Biar nomor WA Admin nggak kebanjiran chat & foto dari banyak member sekaligus — ini yang paling sering bikin nomor kena spam / diblokir WhatsApp. Lebih simpel, cepat, dan semua foto masuk otomatis rapi tersimpan. Admin yang akan pilih & teruskan ke grup WA Rapi Team.`;
 }
 async function copyPlainText(text) {
   if (navigator.clipboard && window.isSecureContext) {
@@ -756,6 +788,10 @@ async function saveStatus(patch) {
   Object.assign(state, patch);
   render();
   await setDoc(statusRef, { queueCount: state.queueCount, pushMode: state.pushMode, groupOpen: state.groupOpen });
+}
+function toggleGroupStatus() {
+  const newStatus = !state.groupOpen;
+  saveStatus({ groupOpen: newStatus });
 }
 function doLogin() {
   const allowedList = accountsForRole(state.role);
@@ -1106,9 +1142,15 @@ function renderFotoTabStaff(s) {
 
 /* ---------- Render: staff tab "Tim Admin" ---------- */
 function renderAdminTab(s) {
+  const isOwner = s.session && s.session.role === "Owner";
   return `<div class="tab-panel" style="max-width:640px; display:flex; flex-direction:column; gap:16px;">
     <div class="card">
-      <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Akun Admin & Owner</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Akun Admin & Owner</h2>
+        <a href="admin.html" class="nav-link-btn nav-link-btn-amber" target="_blank">
+          <i data-lucide="users" size="14"></i> Tugas Admin
+        </a>
+      </div>
       <p style="color:${palette.muted}; font-size:12px; margin:0 0 12px;">Hanya akun terdaftar ini yang bisa login ke panel — nggak bisa ditambah member sembarangan.</p>
       <div>
         ${s.accounts.map(a => `
@@ -1135,13 +1177,49 @@ function renderAdminTab(s) {
       ${s.pwMsg ? `<p style="color:${s.pwMsg.includes('berhasil')?palette.teal:palette.danger}; font-size:12px; margin-bottom:8px;">${esc(s.pwMsg)}</p>` : ""}
       <button class="btn-amber" onclick="changePassword()"><i data-lucide="lock" size="14"></i> Simpan password baru</button>
     </div>
+    ${isOwner ? `
+    <div class="card">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 4px;">Status Grup WA</h2>
+          <p style="color:${palette.muted}; font-size:12px; margin:0;">Kontrol apakah grup WA terbuka atau tertutup untuk member.</p>
+        </div>
+        <button class="${s.groupOpen ? 'btn-teal' : 'btn-outline'}" onclick="toggleGroupStatus()">
+          <i data-lucide="${s.groupOpen ? 'door-open' : 'door-closed'}" size="14"></i>
+          ${s.groupOpen ? 'Grup Terbuka' : 'Grup Tertutup'}
+        </button>
+      </div>
+      <p style="color:${s.groupOpen ? palette.teal : palette.danger}; font-size:12px; margin-top:10px;">
+        ${s.groupOpen ? '✅ Grup WA terbuka — member bisa chat & lihat pesan.' : '🔒 Grup WA tertutup — member tidak bisa chat di grup.'}
+      </p>
+    </div>
+    ` : `
+    <div class="card">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 4px;">Status Grup WA</h2>
+          <p style="color:${palette.muted}; font-size:12px; margin:0;">Cuma Owner yang bisa ubah status grup.</p>
+        </div>
+        <span class="chip ${s.groupOpen ? 'chip-teal' : 'chip-danger'}">
+          <i data-lucide="${s.groupOpen ? 'door-open' : 'door-closed'}" size="12"></i>
+          ${s.groupOpen ? 'Grup Terbuka' : 'Grup Tertutup'}
+        </span>
+      </div>
+    </div>
+    `}
   </div>`;
 }
 
 /* ---------- Render: member tab "Acara" ---------- */
 function renderMemberAcara(s) {
   let html = `<div class="tab-panel">`;
-  html += `<h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 4px;">Acara yang bisa diikuti</h2>
+  html += `
+  <div class="nav-links">
+    <a href="rules-member.html" class="nav-link-btn nav-link-btn-amber" target="_blank">
+      <i data-lucide="file-text" size="14"></i> Aturan Member
+    </a>
+  </div>
+  <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 4px;">Acara yang bisa diikuti</h2>
     <p style="color:${palette.muted}; font-size:13px; margin:0 0 16px;">Pilih acara, isi nama, lalu konfirmasi ikut.</p>`;
   if (s.showMemberTutorial) {
     html += `
@@ -1203,6 +1281,13 @@ function renderMemberAcara(s) {
 function renderMemberFoto(s) {
   const status = getFotoStatus();
   let html = `<div class="member-wrap tab-panel" style="padding:0;">`;
+
+  html += `
+  <div class="nav-links">
+    <a href="rules-member.html" class="nav-link-btn nav-link-btn-amber" target="_blank">
+      <i data-lucide="file-text" size="14"></i> Aturan Member
+    </a>
+  </div>`;
 
   if (s.showFotoTutorial) {
     html += `<div class="tutorial-card anim-card" style="margin-bottom:14px;">
@@ -1456,6 +1541,7 @@ window.selectRole = selectRole;
 window.backToWelcome = backToWelcome;
 window.enableQueueNotifications = enableQueueNotifications;
 window.saveStatus = saveStatus;
+window.toggleGroupStatus = toggleGroupStatus;
 window.doLogin = doLogin;
 window.doLogout = doLogout;
 window.changePassword = changePassword;
