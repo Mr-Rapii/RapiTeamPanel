@@ -1,0 +1,632 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  Users, CalendarPlus, Copy, Check, Plus, Trash2, Crown, ShieldCheck,
+  Clock, DoorOpen, DoorClosed, TrendingUp, ChevronDown, ChevronUp, Wallet,
+  Lock, LogOut, Eye, EyeOff,
+} from "lucide-react";
+
+const FONTS = `
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+`;
+
+const palette = {
+  bg: "#0F1B22",
+  surface: "#16272F",
+  surface2: "#1D323B",
+  line: "#2A3E46",
+  amber: "#E8A33D",
+  teal: "#4FB0A5",
+  text: "#EDE7DA",
+  muted: "#8FA3AB",
+  danger: "#D9705C",
+};
+
+const display = { fontFamily: "'Space Grotesk', sans-serif" };
+const body = { fontFamily: "'Inter', sans-serif" };
+const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
+
+const DEFAULT_ACCOUNTS = [
+  { name: "Rapi", role: "Owner", password: "rapi2026" },
+  { name: "Nizam", role: "Admin", password: "nizam123" },
+  { name: "Vivi", role: "Admin", password: "vivi123" },
+  { name: "Nanau", role: "Admin", password: "nanau123" },
+  { name: "Michelle", role: "Admin", password: "michelle123" },
+];
+
+function Chip({ children, tone = "muted" }) {
+  const tones = {
+    muted: { bg: "rgba(143,163,171,0.12)", color: palette.muted, border: palette.line },
+    amber: { bg: "rgba(232,163,61,0.14)", color: palette.amber, border: "rgba(232,163,61,0.35)" },
+    teal: { bg: "rgba(79,176,165,0.14)", color: palette.teal, border: "rgba(79,176,165,0.35)" },
+    danger: { bg: "rgba(217,112,92,0.14)", color: palette.danger, border: "rgba(217,112,92,0.35)" },
+  };
+  const t = tones[tone];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+      style={{ background: t.bg, color: t.color, border: `1px solid ${t.border}`, ...body }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function useClock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+const inputStyle = {
+  background: palette.surface2,
+  border: `1px solid ${palette.line}`,
+  color: palette.text,
+  ...body,
+};
+
+export default function RapiTeamPanel() {
+  const now = useClock();
+  const isActive = now.getHours() >= 7;
+
+  const [tab, setTab] = useState("acara");
+  const [loaded, setLoaded] = useState(false);
+  const [mode, setMode] = useState("admin"); // "admin" | "member"
+
+  const [accounts, setAccounts] = useState(DEFAULT_ACCOUNTS);
+  const [session, setSession] = useState(null); // {name, role}
+  const [loginName, setLoginName] = useState(DEFAULT_ACCOUNTS[0].name);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwMsg, setPwMsg] = useState("");
+
+  const [queueCount, setQueueCount] = useState(0);
+  const [pushMode, setPushMode] = useState(false);
+  const [groupOpen, setGroupOpen] = useState(true);
+
+  const [events, setEvents] = useState([]);
+  const [expanded, setExpanded] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [partInputs, setPartInputs] = useState({}); // {eventId: {name, due}}
+
+  const [form, setForm] = useState({
+    judul: "Jalan-jalan bareng",
+    tanggal: "",
+    waktu: "",
+    lokasi: "",
+    biayaText: "Gratis",
+    biayaNominal: "",
+    kuota: "",
+    batas: "",
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const acc = await window.storage.get("rapi-accounts", true);
+        if (acc?.value) {
+          setAccounts(JSON.parse(acc.value));
+        } else {
+          await window.storage.set("rapi-accounts", JSON.stringify(DEFAULT_ACCOUNTS), true);
+        }
+      } catch {}
+      try {
+        const s = await window.storage.get("rapi-status", true);
+        if (s?.value) {
+          const p = JSON.parse(s.value);
+          setQueueCount(p.queueCount ?? 0);
+          setPushMode(p.pushMode ?? false);
+          setGroupOpen(p.groupOpen ?? true);
+        }
+      } catch {}
+      try {
+        const ev = await window.storage.get("rapi-events", true);
+        if (ev?.value) setEvents(JSON.parse(ev.value));
+      } catch {}
+      setLoaded(true);
+    })();
+  }, []);
+
+  const saveAccounts = useCallback(async (list) => {
+    setAccounts(list);
+    try { await window.storage.set("rapi-accounts", JSON.stringify(list), true); } catch {}
+  }, []);
+
+  const saveStatus = useCallback(async (patch) => {
+    const next = { queueCount, pushMode, groupOpen, ...patch };
+    setQueueCount(next.queueCount); setPushMode(next.pushMode); setGroupOpen(next.groupOpen);
+    try { await window.storage.set("rapi-status", JSON.stringify(next), true); } catch {}
+  }, [queueCount, pushMode, groupOpen]);
+
+  const saveEvents = useCallback(async (list) => {
+    setEvents(list);
+    try { await window.storage.set("rapi-events", JSON.stringify(list), true); } catch {}
+  }, []);
+
+  const doLogin = () => {
+    const acc = accounts.find((a) => a.name === loginName);
+    if (acc && acc.password === loginPassword) {
+      setSession({ name: acc.name, role: acc.role });
+      setLoginError("");
+      setLoginPassword("");
+    } else {
+      setLoginError("Nama atau password salah.");
+    }
+  };
+
+  const doLogout = () => {
+    setSession(null);
+    setTab("acara");
+  };
+
+  const changePassword = () => {
+    setPwMsg("");
+    const acc = accounts.find((a) => a.name === session?.name);
+    if (!acc || acc.password !== pwCurrent) {
+      setPwMsg("Password lama salah.");
+      return;
+    }
+    if (!pwNew.trim()) {
+      setPwMsg("Password baru tidak boleh kosong.");
+      return;
+    }
+    const list = accounts.map((a) => (a.name === session.name ? { ...a, password: pwNew.trim() } : a));
+    saveAccounts(list);
+    setPwCurrent(""); setPwNew("");
+    setPwMsg("Password berhasil diganti.");
+  };
+
+  const readyToAccept = queueCount >= 10 && !pushMode;
+
+  const buildEventText = (e) => `╔══════════════════════════╗
+   🎉 EVENT RAPI TEAM 🎉
+╚══════════════════════════╝
+
+📢 Halo semua member Rapi Team!
+
+Owner mengadakan ${e.judul || "acara bareng"} nih! 🚶‍♂️🚶‍♀️
+Yuk yang mau ikut, merapat! 🔥
+
+╭──────────────
+📅 Tanggal   : ${e.tanggal || "[isi tanggal]"}
+⏰ Waktu     : ${e.waktu || "[isi jam]"}
+📍 Lokasi    : ${e.lokasi || "[isi lokasi]"}
+💰 Biaya     : ${e.biayaText || "[isi biaya]"}
+👥 Kuota     : ${e.kuota || "[tanpa batas]"}
+⏳ Batas Konfirmasi : ${e.batas || "[isi tanggal]"}
+╰──────────────
+
+📝 FORMAT KONFIRMASI (isi & kirim ke Admin):
+
+Nama :
+Kesiapan Hadir : Ikut / Tidak
+Catatan (opsional) :
+
+📌 KETENTUAN:
+• Wajib konfirmasi sebelum batas waktu di atas
+• Diharapkan on time
+• Jaga sikap & nama baik Rapi Team selama acara
+• Dilarang bawa drama 😄
+
+Ditunggu partisipasinya ya, biar makin seru dan kompak! 💪
+
+— Admin Rapi Team (atas arahan Owner)`;
+
+  const createEvent = () => {
+    if (!form.judul.trim()) return;
+    const newEvent = { id: Date.now().toString(), ...form, participants: [] };
+    saveEvents([newEvent, ...events]);
+    setExpanded(newEvent.id);
+    setForm({ judul: "", tanggal: "", waktu: "", lokasi: "", biayaText: "Gratis", biayaNominal: "", kuota: "", batas: "" });
+  };
+
+  const removeEvent = (id) => {
+    saveEvents(events.filter((e) => e.id !== id));
+    if (expanded === id) setExpanded(null);
+  };
+
+  const copyEventText = async (e) => {
+    try {
+      await navigator.clipboard.writeText(buildEventText(e));
+      setCopiedId(e.id);
+      setTimeout(() => setCopiedId(null), 1800);
+    } catch {}
+  };
+
+  const getPartInput = (eid) => partInputs[eid] || { name: "", due: events.find((e) => e.id === eid)?.biayaNominal || "" };
+  const setPartInput = (eid, patch) => setPartInputs((prev) => ({ ...prev, [eid]: { ...getPartInput(eid), ...patch } }));
+
+  const addParticipant = (eid) => {
+    const input = getPartInput(eid);
+    if (!input.name.trim()) return;
+    const list = events.map((e) => {
+      if (e.id !== eid) return e;
+      const participant = { id: Date.now().toString(), name: input.name.trim(), due: Number(input.due) || 0, paid: 0 };
+      return { ...e, participants: [...e.participants, participant] };
+    });
+    saveEvents(list);
+    setPartInput(eid, { name: "", due: input.due });
+  };
+
+  const updateParticipant = (eid, pid, patch) => {
+    const list = events.map((e) => (e.id !== eid ? e : { ...e, participants: e.participants.map((p) => (p.id === pid ? { ...p, ...patch } : p)) }));
+    saveEvents(list);
+  };
+
+  const removeParticipant = (eid, pid) => {
+    const list = events.map((e) => (e.id !== eid ? e : { ...e, participants: e.participants.filter((p) => p.id !== pid) }));
+    saveEvents(list);
+  };
+
+  return (
+    <div style={{ background: palette.bg, minHeight: "100vh", ...body }} className="w-full">
+      <style>{FONTS}</style>
+
+      {/* Header */}
+      <div className="px-5 sm:px-8 pt-8 pb-5" style={{ borderBottom: `1px solid ${palette.line}` }}>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: palette.amber }}>
+                <ShieldCheck size={18} color={palette.bg} />
+              </div>
+              <h1 style={{ ...display, color: palette.text, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em" }}>RAPI TEAM</h1>
+            </div>
+            <p style={{ color: palette.muted, fontSize: 13, marginTop: 2, marginLeft: 40 }}>
+              {mode === "admin" ? (session ? `Masuk sebagai ${session.name} (${session.role})` : "Panel kendali Admin & Owner") : "Konfirmasi kehadiran member"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {mode === "admin" && session && (
+              <>
+                <Chip tone={isActive ? "teal" : "muted"}>
+                  <Clock size={13} /> {isActive ? "Aktif · 07.00–24.00" : "Istirahat · 00.00–07.00"}
+                </Chip>
+                <Chip tone={groupOpen ? "teal" : "danger"}>
+                  {groupOpen ? <DoorOpen size={13} /> : <DoorClosed size={13} />}
+                  {groupOpen ? "Grup Terbuka" : "Grup Tertutup"}
+                </Chip>
+                <button onClick={doLogout} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium" style={{ color: palette.danger, border: `1px solid ${palette.line}` }}>
+                  <LogOut size={13} /> Keluar
+                </button>
+              </>
+            )}
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: palette.surface }}>
+              {[{ id: "admin", label: "Saya Admin" }, { id: "member", label: "Saya Member" }].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium"
+                  style={{ background: mode === m.id ? palette.amber : "transparent", color: mode === m.id ? palette.bg : palette.muted, ...display }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Login gate */}
+      {mode === "admin" && !session && (
+        <div className="px-5 sm:px-8 py-10 flex justify-center">
+          <div className="w-full max-w-sm rounded-xl p-6" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Lock size={16} color={palette.amber} />
+              <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600 }}>Masuk sebagai Admin/Owner</h2>
+            </div>
+
+            <label style={{ color: palette.muted, fontSize: 12 }}>Nama</label>
+            <select value={loginName} onChange={(e) => setLoginName(e.target.value)} className="w-full mt-1 mb-3 px-3 py-2 rounded-md text-sm outline-none" style={inputStyle}>
+              {accounts.map((a) => (
+                <option key={a.name} value={a.name}>{a.name} — {a.role}</option>
+              ))}
+            </select>
+
+            <label style={{ color: palette.muted, fontSize: 12 }}>Password</label>
+            <div className="relative mt-1 mb-3">
+              <input
+                type={showPw ? "text" : "password"}
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && doLogin()}
+                className="w-full px-3 py-2 rounded-md text-sm outline-none pr-9"
+                style={inputStyle}
+              />
+              <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2" style={{ color: palette.muted }}>
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+
+            {loginError && <p style={{ color: palette.danger, fontSize: 12, marginBottom: 8 }}>{loginError}</p>}
+
+            <button onClick={doLogin} className="w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium" style={{ background: palette.amber, color: palette.bg, ...display }}>
+              <Lock size={14} /> Masuk
+            </button>
+
+            <p style={{ color: palette.muted, fontSize: 11, marginTop: 12, lineHeight: 1.5 }}>
+              Hanya 5 akun (1 Owner + 4 Admin) yang bisa masuk ke panel ini. Member biasa tetap bisa konfirmasi kehadiran lewat tombol "Saya Member" tanpa perlu login.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Queue tracker */}
+      {mode === "admin" && session && (
+      <div className="px-5 sm:px-8 py-5" style={{ borderBottom: `1px solid ${palette.line}` }}>
+        <div className="rounded-xl p-4 sm:p-5" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={16} color={palette.amber} />
+              <span style={{ color: palette.text, fontWeight: 600, fontSize: 14, ...display }}>Antrian Permintaan Masuk</span>
+            </div>
+            <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: palette.muted }}>
+              <input type="checkbox" checked={pushMode} onChange={(e) => saveStatus({ pushMode: e.target.checked })} style={{ accentColor: palette.amber }} />
+              Owner sedang push member
+            </label>
+          </div>
+          <div className="flex items-center gap-3 mb-2">
+            <button onClick={() => saveStatus({ queueCount: Math.max(0, queueCount - 1) })} className="w-7 h-7 rounded-md flex items-center justify-center text-sm" style={{ background: palette.surface2, color: palette.text, border: `1px solid ${palette.line}` }}>−</button>
+            <span style={{ ...display, color: palette.text, fontSize: 20, fontWeight: 700, minWidth: 24, textAlign: "center" }}>{queueCount}</span>
+            <button onClick={() => saveStatus({ queueCount: queueCount + 1 })} className="w-7 h-7 rounded-md flex items-center justify-center text-sm" style={{ background: palette.surface2, color: palette.text, border: `1px solid ${palette.line}` }}>+</button>
+            <span style={{ color: palette.muted, fontSize: 12 }}>permintaan menunggu / target 10</span>
+          </div>
+          <div className="w-full h-2 rounded-full overflow-hidden mb-3" style={{ background: palette.surface2 }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (queueCount / 10) * 100)}%`, background: readyToAccept ? palette.teal : palette.amber }} />
+          </div>
+          <p style={{ color: readyToAccept ? palette.teal : palette.muted, fontSize: 13, fontWeight: 500 }}>
+            {pushMode ? "⏸ Ditahan — Owner sedang push member. Jangan terima request dulu." : readyToAccept ? "✅ Sudah 10+ request — boleh diterima sekaligus." : `⏳ Belum cukup — tunggu ${10 - queueCount} request lagi sebelum diterima.`}
+          </p>
+        </div>
+      </div>
+      )}
+
+      {/* Tabs */}
+      {mode === "admin" && session && (
+      <div className="px-5 sm:px-8 pt-5">
+        <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: palette.surface }}>
+          {[{ id: "acara", label: "Buat Acara", icon: CalendarPlus }, { id: "admin", label: "Tim Admin", icon: Users }].map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id)} className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors" style={{ background: tab === id ? palette.amber : "transparent", color: tab === id ? palette.bg : palette.muted, ...display }}>
+              <Icon size={15} /> {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      )}
+
+      {mode === "admin" && session && (
+      <div className="px-5 sm:px-8 py-6">
+        {tab === "acara" && (
+          <div className="space-y-6">
+            <div className="rounded-xl p-5" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+              <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Buat acara baru</h2>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[
+                  { key: "judul", label: "Nama kegiatan", placeholder: "Jalan-jalan bareng" },
+                  { key: "tanggal", label: "Tanggal", placeholder: "Minggu, 12 Juli 2026" },
+                  { key: "waktu", label: "Waktu", placeholder: "09.00 WIB" },
+                  { key: "lokasi", label: "Lokasi", placeholder: "Taman Kota" },
+                  { key: "biayaText", label: "Biaya (teks di pengumuman)", placeholder: "Gratis / patungan" },
+                  { key: "biayaNominal", label: "Biaya per orang (Rp, angka)", placeholder: "20000" },
+                  { key: "kuota", label: "Kuota (opsional)", placeholder: "20 orang" },
+                  { key: "batas", label: "Batas konfirmasi", placeholder: "Jumat, 10 Juli 2026" },
+                ].map((f) => (
+                  <div key={f.key}>
+                    <label style={{ color: palette.muted, fontSize: 12 }}>{f.label}</label>
+                    <input value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} placeholder={f.placeholder} className="w-full mt-1 px-3 py-2 rounded-md text-sm outline-none" style={inputStyle} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={createEvent} className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium" style={{ background: palette.amber, color: palette.bg, ...display }}>
+                <Plus size={15} /> Simpan acara
+              </button>
+            </div>
+
+            <div>
+              <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Acara tersimpan</h2>
+              {!loaded && <p style={{ color: palette.muted, fontSize: 13 }}>Memuat data…</p>}
+              {loaded && events.length === 0 && (
+                <div className="rounded-xl p-6 text-center" style={{ background: palette.surface, border: `1px dashed ${palette.line}` }}>
+                  <p style={{ color: palette.muted, fontSize: 13 }}>Belum ada acara. Buat dulu di atas.</p>
+                </div>
+              )}
+              <div className="space-y-3">
+                {events.map((e) => {
+                  const totalDue = e.participants.reduce((s, p) => s + (Number(p.due) || 0), 0);
+                  const totalPaid = e.participants.reduce((s, p) => s + (Number(p.paid) || 0), 0);
+                  const lunasCount = e.participants.filter((p) => Number(p.paid) >= Number(p.due) && Number(p.due) > 0).length;
+                  const isOpen = expanded === e.id;
+                  const pInput = getPartInput(e.id);
+                  return (
+                    <div key={e.id} className="rounded-xl overflow-hidden" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(isOpen ? null : e.id)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left"
+                      >
+                        <div className="min-w-0">
+                          <p style={{ color: palette.text, fontSize: 14, fontWeight: 600, ...display }}>{e.judul || "(tanpa nama)"}</p>
+                          <p style={{ color: palette.muted, fontSize: 12, marginTop: 2 }}>{e.tanggal || "Tanggal belum diisi"} · {e.participants.length} peserta</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {totalDue > 0 && (
+                            <Chip tone={lunasCount === e.participants.length && e.participants.length > 0 ? "teal" : "amber"}>
+                              <Wallet size={12} /> {rupiah(totalPaid)}/{rupiah(totalDue)}
+                            </Chip>
+                          )}
+                          <span className="flex items-center gap-1" style={{ color: palette.amber, fontSize: 12, fontWeight: 500 }}>
+                            {isOpen ? "Tutup" : "Lihat detail"}
+                            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </span>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-4 pb-4 pt-1 border-t" style={{ borderColor: palette.line }}>
+                          <div className="flex items-center gap-2 flex-wrap mb-4 mt-3">
+                            <button onClick={() => copyEventText(e)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium" style={{ background: copiedId === e.id ? palette.teal : palette.surface2, color: copiedId === e.id ? palette.bg : palette.text, border: `1px solid ${palette.line}`, ...display }}>
+                              {copiedId === e.id ? <Check size={13} /> : <Copy size={13} />} {copiedId === e.id ? "Tersalin" : "Salin teks pengumuman"}
+                            </button>
+                            <button onClick={() => removeEvent(e.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium" style={{ color: palette.danger, border: `1px solid ${palette.line}` }}>
+                              <Trash2 size={13} /> Hapus acara
+                            </button>
+                          </div>
+
+                          <p style={{ ...display, color: palette.text, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Peserta & pembayaran</p>
+
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            <input value={pInput.name} onChange={(ev2) => setPartInput(e.id, { name: ev2.target.value })} placeholder="Nama peserta" className="flex-1 min-w-[130px] px-3 py-2 rounded-md text-sm outline-none" style={inputStyle} />
+                            <input value={pInput.due} onChange={(ev2) => setPartInput(e.id, { due: ev2.target.value })} placeholder="Wajib bayar (Rp)" type="number" className="w-36 px-3 py-2 rounded-md text-sm outline-none" style={inputStyle} />
+                            <button onClick={() => addParticipant(e.id)} className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium" style={{ background: palette.amber, color: palette.bg, ...display }}>
+                              <Plus size={14} /> Tambah
+                            </button>
+                          </div>
+
+                          {e.participants.length === 0 ? (
+                            <p style={{ color: palette.muted, fontSize: 12 }}>Belum ada peserta yang daftar.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {e.participants.map((p) => {
+                                const lunas = Number(p.paid) >= Number(p.due) && Number(p.due) > 0;
+                                const sisa = Math.max(0, Number(p.due) - Number(p.paid));
+                                return (
+                                  <div key={p.id} className="flex items-center gap-2 flex-wrap px-3 py-2 rounded-md" style={{ background: palette.surface2 }}>
+                                    <span style={{ color: palette.text, fontSize: 13, fontWeight: 500, minWidth: 100 }}>{p.name}</span>
+                                    <span style={{ color: palette.muted, fontSize: 11 }}>Wajib</span>
+                                    <input type="number" value={p.due} onChange={(ev2) => updateParticipant(e.id, p.id, { due: ev2.target.value })} className="w-24 px-2 py-1 rounded text-xs outline-none" style={inputStyle} />
+                                    <span style={{ color: palette.muted, fontSize: 11 }}>Sudah bayar</span>
+                                    <input type="number" value={p.paid} onChange={(ev2) => updateParticipant(e.id, p.id, { paid: ev2.target.value })} className="w-24 px-2 py-1 rounded text-xs outline-none" style={inputStyle} />
+                                    {p.due > 0 ? (
+                                      <Chip tone={lunas ? "teal" : "danger"}>{lunas ? "Lunas" : `Sisa ${rupiah(sisa)}`}</Chip>
+                                    ) : (
+                                      <Chip tone="muted">Gratis</Chip>
+                                    )}
+                                    <button onClick={() => removeParticipant(e.id, p.id)} className="ml-auto" style={{ color: palette.danger }}>
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "admin" && (
+          <div className="max-w-2xl space-y-4">
+            <div className="rounded-xl p-5" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+              <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Akun Admin & Owner</h2>
+              <p style={{ color: palette.muted, fontSize: 12, marginBottom: 12 }}>Hanya 5 akun ini yang bisa login ke panel — nggak bisa ditambah member sembarangan.</p>
+              <div className="space-y-2">
+                {accounts.map((a) => (
+                  <div key={a.name} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ background: palette.surface2, border: `1px solid ${palette.line}` }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: a.role === "Owner" ? "rgba(232,163,61,0.16)" : "rgba(79,176,165,0.16)" }}>
+                        {a.role === "Owner" ? <Crown size={14} color={palette.amber} /> : <ShieldCheck size={14} color={palette.teal} />}
+                      </div>
+                      <div>
+                        <p style={{ color: palette.text, fontSize: 14, fontWeight: 500 }}>{a.name}{a.name === session.name ? " (kamu)" : ""}</p>
+                        <Chip tone={a.role === "Owner" ? "amber" : "teal"}>{a.role}</Chip>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl p-5" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+              <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Ganti password kamu ({session.name})</h2>
+              <div className="grid sm:grid-cols-2 gap-3 mb-3">
+                <input type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} placeholder="Password lama" className="px-3 py-2 rounded-md text-sm outline-none" style={inputStyle} />
+                <input type="password" value={pwNew} onChange={(e) => setPwNew(e.target.value)} placeholder="Password baru" className="px-3 py-2 rounded-md text-sm outline-none" style={inputStyle} />
+              </div>
+              {pwMsg && <p style={{ color: pwMsg.includes("berhasil") ? palette.teal : palette.danger, fontSize: 12, marginBottom: 8 }}>{pwMsg}</p>}
+              <button onClick={changePassword} className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium" style={{ background: palette.amber, color: palette.bg, ...display }}>
+                <Lock size={14} /> Simpan password baru
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      )}
+
+      {mode === "member" && (
+        <div className="px-5 sm:px-8 py-6 max-w-xl">
+          <h2 style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Acara yang bisa diikuti</h2>
+          <p style={{ color: palette.muted, fontSize: 13, marginBottom: 16 }}>Pilih acara, isi nama, lalu konfirmasi ikut.</p>
+
+          {!loaded && <p style={{ color: palette.muted, fontSize: 13 }}>Memuat data…</p>}
+          {loaded && events.length === 0 && (
+            <div className="rounded-xl p-6 text-center" style={{ background: palette.surface, border: `1px dashed ${palette.line}` }}>
+              <p style={{ color: palette.muted, fontSize: 13 }}>Belum ada acara yang dibuat Admin.</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {events.map((e) => {
+              const pInput = getPartInput(e.id);
+              const alreadyJoined = e.participants.some((p) => p.name.toLowerCase() === pInput.name.trim().toLowerCase() && pInput.name.trim() !== "");
+              return (
+                <div key={e.id} className="rounded-xl p-4" style={{ background: palette.surface, border: `1px solid ${palette.line}` }}>
+                  <p style={{ ...display, color: palette.text, fontSize: 15, fontWeight: 600 }}>{e.judul || "(tanpa nama)"}</p>
+                  <div className="flex flex-wrap gap-3 mt-1 mb-3" style={{ color: palette.muted, fontSize: 12 }}>
+                    {e.tanggal && <span>📅 {e.tanggal}</span>}
+                    {e.waktu && <span>⏰ {e.waktu}</span>}
+                    {e.lokasi && <span>📍 {e.lokasi}</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Chip tone="amber">💰 {e.biayaText || "-"}</Chip>
+                    {e.kuota && <Chip tone="muted">👥 kuota {e.kuota}</Chip>}
+                    {e.batas && <Chip tone="muted">⏳ batas {e.batas}</Chip>}
+                    <Chip tone="teal">{e.participants.length} sudah konfirmasi</Chip>
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    <input
+                      value={pInput.name}
+                      onChange={(ev2) => setPartInput(e.id, { name: ev2.target.value })}
+                      placeholder="Nama kamu"
+                      className="flex-1 min-w-[140px] px-3 py-2 rounded-md text-sm outline-none"
+                      style={inputStyle}
+                    />
+                    <button
+                      onClick={() => addParticipant(e.id)}
+                      disabled={alreadyJoined}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium"
+                      style={{ background: alreadyJoined ? palette.surface2 : palette.teal, color: alreadyJoined ? palette.muted : palette.bg, ...display }}
+                    >
+                      <Check size={14} /> {alreadyJoined ? "Sudah ikut" : "Konfirmasi ikut"}
+                    </button>
+                  </div>
+
+                  {e.participants.length > 0 && (
+                    <p style={{ color: palette.muted, fontSize: 11, marginTop: 8 }}>
+                      Sudah konfirmasi: {e.participants.map((p) => p.name).join(", ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="px-5 sm:px-8 py-4 text-center" style={{ color: palette.muted, fontSize: 11 }}>
+        Semua data (akun, acara, peserta, pembayaran) tersimpan otomatis dan tidak akan reset.
+      </div>
+    </div>
+  );
+}
