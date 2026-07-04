@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAPI TEAM — Panel Terpadu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+    --amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .px{padding-left:20px; padding-right:20px;}
+  @media(min-width:640px){ .px{padding-left:32px; padding-right:32px;} }
+  .flex{display:flex;} .items-center{align-items:center;} .justify-between{justify-content:space-between;}
+  .gap-1{gap:4px;} .gap-2{gap:8px;} .gap-3{gap:12px;} .flex-wrap{flex-wrap:wrap;}
+  .rounded-md{border-radius:8px;} .rounded-lg{border-radius:12px;} .rounded-xl{border-radius:16px;} .rounded-full{border-radius:999px;}
+  .hidden{display:none !important;}
+  button{cursor:pointer; font-family:inherit; border:none;}
+  input, select, textarea{font-family:inherit;}
+  input:focus, select:focus, button:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+  button:disabled{cursor:not-allowed; opacity:0.6;}
+  ::selection{background:rgba(232,163,61,0.35);}
+
+  /* ---------- Ambient background (shared across every screen) ---------- */
+  .page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+  .glow{position:absolute; border-radius:999px; filter:blur(80px); opacity:0.3;}
+  .glow-amber{width:300px; height:300px; background:var(--amber); top:-70px; left:-70px; animation:driftA 10s ease-in-out infinite;}
+  .glow-teal{width:340px; height:340px; background:var(--teal); bottom:-90px; right:-80px; animation:driftB 12s ease-in-out infinite;}
+  @keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,24px);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-26px,-18px);}}
+  #app{position:relative; z-index:1;}
+
+  /* Header */
+  .header{padding:32px 20px 20px; border-bottom:1px solid var(--line);}
+  @media(min-width:640px){.header{padding:32px 32px 20px;}}
+  .logo-box{width:32px;height:32px;border-radius:8px;background:var(--amber);display:flex;align-items:center;justify-content:center;}
+  .brand-title{font-size:22px; font-weight:700; letter-spacing:-0.02em; margin:0;}
+  .brand-sub{color:var(--muted); font-size:13px; margin:2px 0 0 40px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid; transition:background .2s, color .2s;}
+  .chip-muted{background:rgba(143,163,171,0.12); color:var(--muted); border-color:var(--line);}
+  .chip-amber{background:rgba(232,163,61,0.14); color:var(--amber); border-color:rgba(232,163,61,0.35);}
+  .chip-teal{background:rgba(79,176,165,0.14); color:var(--teal); border-color:rgba(79,176,165,0.35);}
+  .chip-danger{background:rgba(217,112,92,0.14); color:var(--danger); border-color:rgba(217,112,92,0.35);}
+  .btn-ghost-danger{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;color:var(--danger);border:1px solid var(--line);background:transparent;transition:background .15s;}
+  .btn-ghost-danger:hover{background:rgba(217,112,92,0.1);}
+  .btn-role-switch{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--line);background:var(--surface);transition:background .15s, color .15s;}
+  .btn-role-switch:hover{color:var(--text); background:var(--surface2);}
+
+  /* Card / inputs */
+  .card{border-radius:16px; padding:20px; background:var(--surface); border:1px solid var(--line);}
+  .card-dashed{border-radius:16px; padding:24px; text-align:center; background:var(--surface); border:1px dashed var(--line);}
+  .field-label{color:var(--muted); font-size:12px; display:block; margin-bottom:4px;}
+  .input{width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:8px 12px; border-radius:8px; font-size:14px; outline:none; transition:border-color .15s;}
+  .input:focus{border-color:var(--amber);}
+  .btn-amber{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500; background:var(--amber); color:var(--bg); font-family:'Space Grotesk',sans-serif; transition:transform .12s, filter .12s;}
+  .btn-amber:hover{filter:brightness(1.08);} .btn-amber:active{transform:scale(0.97);}
+  .btn-teal{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500; background:var(--teal); color:var(--bg); font-family:'Space Grotesk',sans-serif; transition:transform .12s, filter .12s;}
+  .btn-teal:hover{filter:brightness(1.08);} .btn-teal:active{transform:scale(0.97);}
+  .btn-outline-danger{display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:500; color:var(--danger); border:1px solid var(--line); background:transparent; transition:background .15s, transform .12s;}
+  .btn-outline-danger:active{transform:scale(0.96);}
+  .btn-outline{display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:500; color:var(--text); border:1px solid var(--line); background:var(--surface2); font-family:'Space Grotesk',sans-serif; transition:background .15s, transform .12s;}
+  .btn-outline:active{transform:scale(0.96);}
+  .link-btn{background:transparent; color:var(--muted); font-size:12px; text-decoration:underline; padding:4px;}
+
+  /* Login */
+  .login-shell{padding:40px 20px; display:flex; justify-content:center;}
+  .login-card{width:100%; max-width:380px; border-radius:16px; padding:24px; background:var(--surface); border:1px solid var(--line); animation:fadeUp .45s ease both;}
+  .pw-wrap{position:relative;}
+  .pw-toggle{position:absolute; right:8px; top:50%; transform:translateY(-50%); background:transparent; color:var(--muted); padding:2px;}
+
+  /* Tabs (sliding highlight) */
+  .tabs{display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--surface); width:fit-content; max-width:100%; overflow-x:auto;}
+  .tabs button{display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500; background:transparent; color:var(--muted); font-family:'Space Grotesk',sans-serif; white-space:nowrap; transition:background .2s ease, color .2s ease, transform .12s;}
+  .tabs button.active{background:var(--amber); color:var(--bg);}
+  .tabs button:active{transform:scale(0.96);}
+
+  .tab-panel{animation:fadeSlide .32s cubic-bezier(.22,1,.36,1) both;}
+  @keyframes fadeSlide{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Event list */
+  .event-card{border-radius:16px; overflow:hidden; background:var(--surface); border:1px solid var(--line);}
+  .event-head{width:100%; display:flex; align-items:center; justify-content:space-between; padding:12px 16px; text-align:left; background:transparent; color:inherit;}
+  .event-body{padding:4px 16px 16px; border-top:1px solid var(--line); animation:fadeSlide .25s ease both;}
+  .part-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 12px; border-radius:8px; background:var(--surface2); margin-bottom:8px;}
+  .part-input{width:96px; padding:4px 8px; border-radius:6px; font-size:12px;}
+
+  .progress-track{width:100%; height:8px; border-radius:999px; overflow:hidden; background:var(--surface2); margin-bottom:12px;}
+  .progress-fill{height:100%; border-radius:999px; transition:width .4s ease, background .3s ease;}
+
+  .acc-row{display:flex; align-items:center; justify-content:space-between; border-radius:12px; padding:12px 16px; background:var(--surface2); border:1px solid var(--line); margin-bottom:8px;}
+  .acc-avatar{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;}
+
+  .footer-note{padding:16px 20px; text-align:center; color:var(--muted); font-size:11px;}
+  @media(min-width:640px){.footer-note{padding:16px 32px;}}
+
+  .grid2{display:grid; grid-template-columns:1fr; gap:12px;}
+  @media(min-width:640px){.grid2{grid-template-columns:1fr 1fr;}}
+
+  .conn-banner{padding:8px 20px; text-align:center; font-size:12px; background:rgba(232,163,61,0.14); color:var(--amber); border-bottom:1px solid rgba(232,163,61,0.35);}
+
+  /* ---------- Welcome screen ---------- */
+  .welcome-shell{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px 20px; position:relative; text-align:center;
+  }
+  .welcome-logo{
+    width:64px;height:64px;border-radius:18px;background:var(--amber);
+    display:flex;align-items:center;justify-content:center; margin-bottom:22px;
+    animation:logoPop .6s cubic-bezier(.34,1.56,.64,1) both, floatGlow 3.2s ease-in-out 0.6s infinite;
+    position:relative; z-index:1;
+  }
+  @keyframes logoPop{ from{opacity:0; transform:scale(0.4) rotate(-8deg);} to{opacity:1; transform:scale(1) rotate(0deg);} }
+  @keyframes floatGlow{ 0%,100%{transform:translateY(0); box-shadow:0 8px 24px rgba(232,163,61,0.15);} 50%{transform:translateY(-6px); box-shadow:0 16px 32px rgba(232,163,61,0.28);} }
+
+  .welcome-eyebrow{
+    color:var(--muted); font-size:12px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 8px;
+    animation:fadeUp .5s ease .05s both; position:relative; z-index:1;
+  }
+  .welcome-title{
+    font-size:clamp(30px,7vw,46px); font-weight:700; letter-spacing:-0.03em; margin:0 0 10px;
+    background:linear-gradient(100deg, var(--text) 20%, var(--amber) 45%, var(--teal) 65%, var(--text) 85%);
+    background-size:220% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:fadeUp .5s ease .1s both, shimmer 5s linear 0.6s infinite;
+    position:relative; z-index:1;
+  }
+  @keyframes shimmer{ to{ background-position:-220% center; } }
+  .welcome-sub{
+    color:var(--muted); font-size:14px; max-width:380px; margin:0 0 36px; line-height:1.6;
+    animation:fadeUp .5s ease .18s both; position:relative; z-index:1;
+  }
+  .role-grid{
+    display:grid; grid-template-columns:1fr; gap:12px; width:100%; max-width:380px;
+    position:relative; z-index:1;
+  }
+  .role-card{
+    display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:16px;
+    background:var(--surface); border:1px solid var(--line); text-align:left; color:inherit;
+    transition:border-color .18s, transform .12s, background .18s;
+    animation:fadeUp .5s ease both;
+  }
+  .role-card:nth-child(1){animation-delay:.26s;}
+  .role-card:nth-child(2){animation-delay:.34s;}
+  .role-card:nth-child(3){animation-delay:.42s;}
+  .role-card:hover{transform:translateY(-2px); background:var(--surface2);}
+  .role-card:active{transform:scale(0.98);}
+  .role-icon{
+    width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .role-name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px; margin:0;}
+  .role-desc{color:var(--muted); font-size:12px; margin:2px 0 0;}
+  .role-arrow{margin-left:auto; color:var(--muted); flex-shrink:0; transition:transform .15s, color .15s;}
+  .role-card:hover .role-arrow{transform:translateX(3px); color:var(--text);}
+
+  .welcome-foot{
+    color:var(--muted); font-size:11px; margin-top:28px; position:relative; z-index:1;
+    animation:fadeUp .5s ease .5s both;
+  }
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  .app-fade{animation:appFade .35s ease both;}
+  @keyframes appFade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  .anim-card{animation:fadeUp .45s cubic-bezier(.22,1,.36,1) both;}
+
+  .tutorial-card{
+    border-radius:16px; padding:16px; background:rgba(232,163,61,0.08); border:1px solid rgba(232,163,61,0.3);
+  }
+  .tutorial-steps{margin:0; padding-left:18px; color:var(--text); font-size:13px; line-height:1.9;}
+  .tutorial-steps li{margin-bottom:2px;}
+  .tutorial-steps b{color:var(--amber); font-weight:600;}
+
+  /* Queue-ready toast */
+  .queue-toast{
+    position:fixed; top:12px; left:12px; right:12px; z-index:9998; max-width:420px; margin:0 auto;
+    display:flex; align-items:flex-start; gap:10px; padding:14px 14px;
+    background:var(--surface); border:1px solid rgba(232,163,61,0.45); border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .queue-toast-icon{font-size:20px; line-height:1;}
+  .queue-toast-title{margin:0; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; color:var(--text);}
+  .queue-toast-body{margin:2px 0 0; font-size:12px; color:var(--muted); line-height:1.5;}
+  .queue-toast-close{background:transparent; color:var(--muted); padding:2px; flex-shrink:0;}
+  .queue-toast-hide{ animation:toastOut .35s ease both; }
+
+  .toast{
+    position:fixed; top:14px; left:12px; right:12px; z-index:9999; max-width:420px; margin:0 auto;
+    display:flex; align-items:center; gap:10px; padding:12px 14px;
+    background:var(--surface); border:1px solid rgba(79,176,165,0.4); border-radius:14px;
+    box-shadow:0 10px 28px rgba(0,0,0,0.35);
+    animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .toast p{margin:0; font-size:13px; font-weight:500;}
+  .toast-hide{animation:toastOut .3s ease both;}
+  @keyframes toastIn{ from{opacity:0; transform:translateY(-16px) scale(0.96);} to{opacity:1; transform:translateY(0) scale(1);} }
+  @keyframes toastOut{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-12px);} }
+
+  /* ---------- Member card shell (mobile-first, used for member role screens) ---------- */
+  .member-wrap{max-width:560px; margin:0 auto; padding:20px 20px 40px;}
+
+  .countdown{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:600; letter-spacing:0.02em; text-align:center; margin:6px 0 2px;}
+  .countdown-label{text-align:center; color:var(--muted); font-size:12px; margin-bottom:2px;}
+  .countdown.tick{animation:tickBump .35s ease;}
+  @keyframes tickBump{ 0%{transform:scale(1);} 30%{transform:scale(1.08);} 100%{transform:scale(1);} }
+
+  .upload-box{border:1px dashed var(--line); border-radius:14px; padding:18px; text-align:center; background:var(--surface2); cursor:pointer; transition:border-color .15s, transform .15s;}
+  .upload-box:hover{border-color:var(--amber);}
+  .upload-box:active{transform:scale(0.98);}
+  .upload-box img{max-width:100%; max-height:220px; border-radius:10px; display:block; margin:0 auto; animation:fadeUp .3s ease both;}
+
+  .photo-row{display:flex; align-items:center; gap:12px; padding:10px; border-radius:12px; background:var(--surface2); border:1px solid var(--line); margin-bottom:8px; animation:fadeUp .35s ease both;}
+  .photo-thumb{width:52px; height:52px; border-radius:8px; object-fit:cover; flex-shrink:0; background:var(--surface);}
+
+  .toggle{display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;}
+  .toggle input{width:38px; height:22px; -webkit-appearance:none; appearance:none; background:var(--surface2); border:1px solid var(--line); border-radius:999px; position:relative; cursor:pointer; transition:background .15s;}
+  .toggle input:checked{background:var(--teal);}
+  .toggle input::before{content:''; position:absolute; width:16px; height:16px; border-radius:999px; background:var(--text); top:2px; left:2px; transition:transform .15s;}
+  .toggle input:checked::before{transform:translateX(16px);}
+
+  .spinner{width:16px;height:16px;border:2px solid rgba(15,27,34,0.3);border-top-color:var(--bg);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .broadcast-box{width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:10px; font-size:12px; line-height:1.6; white-space:pre-wrap; font-family:'JetBrains Mono',monospace; resize:vertical; min-height:150px;}
+
+  .hero-logo{
+    animation:logoPop .55s cubic-bezier(.34,1.56,.64,1) both, floatGlow 3s ease-in-out .55s infinite;
+    box-shadow:0 8px 22px rgba(232,163,61,0.18);
+  }
+
+  .live-dot{width:7px; height:7px; border-radius:999px; background:var(--teal); display:inline-block; position:relative;}
+  .live-dot::after{content:''; position:absolute; inset:0; border-radius:999px; background:var(--teal); animation:pulseDot 1.6s ease-out infinite;}
+  @keyframes pulseDot{ 0%{transform:scale(1); opacity:0.7;} 100%{transform:scale(2.6); opacity:0;} }
+
+  .cta-glow{animation:ctaGlow 2.2s ease-in-out infinite;}
+  @keyframes ctaGlow{ 0%,100%{box-shadow:0 0 0 rgba(79,176,165,0.0);} 50%{box-shadow:0 0 0 8px rgba(79,176,165,0.12);} }
+
+  .check-pop{animation:checkPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes checkPop{ from{opacity:0; transform:scale(0.4);} to{opacity:1; transform:scale(1);} }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+<div id="app">
+  <div class="conn-banner">Menyambungkan ke server…</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot,
+  collection, addDoc, updateDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+/* ---------- Firebase init (satu project buat semua fitur) ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyB674t6fiJ8HT9ENfeS3Vzv-BSGQTQ-3BI",
+  authDomain: "rapi-dev-43ddf.firebaseapp.com",
+  projectId: "rapi-dev-43ddf",
+  storageBucket: "rapi-dev-43ddf.firebasestorage.app",
+  messagingSenderId: "392684134756",
+  appId: "1:392684134756:web:6ef9ed85f4fb29db29da71"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const accountsRef   = doc(db, "rapiTeam", "accounts");
+const statusRef      = doc(db, "rapiTeam", "status");
+const fotoSessionRef = doc(db, "rapiTeam", "collabSession");
+const eventsRef      = collection(db, "rapiTeamEvents");
+const photosRef      = collection(db, "rapiTeamCollabPhotos");
+
+/* ---------- Shared helpers ---------- */
+const palette = {
+  bg:"#0F1B22", surface:"#16272F", surface2:"#1D323B", line:"#2A3E46",
+  amber:"#E8A33D", teal:"#4FB0A5", text:"#EDE7DA", muted:"#8FA3AB", danger:"#D9705C",
+};
+const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
+const pad = n => String(n).padStart(2,"0");
+const MAX_BASE64_BYTES = 850 * 1024; // batas aman di bawah limit 1MB per dokumen Firestore
+
+function esc(str) {
+  return String(str ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+}
+function chip(content, tone, extraStyle) {
+  return `<span class="chip chip-${tone}" style="${extraStyle||''}">${content}</span>`;
+}
+
+const DEFAULT_ACCOUNTS = [
+  { name: "Rapi", role: "Owner", password: "rapi2026" },
+  { name: "Nizam", role: "Admin", password: "nizam123" },
+  { name: "Vivi", role: "Admin", password: "vivi123" },
+  { name: "Nanau", role: "Admin", password: "nanau123" },
+  { name: "Michelle", role: "Admin", password: "michelle123" },
+];
+
+const ROLE_META = {
+  owner:  { label:"Owner", icon:"crown",        tone:"amber", desc:"Kendali penuh atas tim & akun Admin." },
+  admin:  { label:"Admin", icon:"shield-check", tone:"teal",  desc:"Kelola acara, foto collab & pembayaran." },
+  member: { label:"Member", icon:"users",       tone:"muted", desc:"Konfirmasi acara & kirim foto collab, tanpa login." },
+};
+
+/* ---------- App state (gabungan Panel Kendali + Kirim Foto Collab) ---------- */
+let state = {
+  ready: false,
+  now: new Date(),
+  screen: "welcome", // "welcome" | "app"
+  role: null,        // "owner" | "admin" | "member"
+  tab: "acara",       // staff tabs: acara | foto | admin
+  memberTab: "acara", // member tabs: acara | foto
+
+  accounts: [],
+  session: null, // staff login session {name, role}
+
+  loginName: "", loginPassword: "", loginError: "", showPw: false,
+  pwCurrent: "", pwNew: "", pwMsg: "",
+
+  queueCount: 0, pushMode: false, groupOpen: true,
+
+  events: [],
+  expanded: null, copiedId: null, partInputs: {},
+  form: { judul:"", tanggal:"", waktu:"", lokasi:"", biayaText:"Gratis", biayaNominal:"", kuota:"", batas:"" },
+  debugMsg: "", saving: false,
+  showMemberTutorial: true,
+  notifPermission: (typeof Notification !== "undefined") ? Notification.permission : "unsupported",
+
+  // ---- Foto collab: sesi (diatur Admin/Owner) ----
+  fotoSession: null, // {judul,tanggal,jamMulai,jamSelesai,aktif}
+  photos: [],
+  formJudul: "", formTanggal: "", formJamMulai: "07:00", formJamSelesai: "12:00", formAktif: true,
+  savingSession: false, savedMsg: "",
+
+  // ---- Foto collab: form member ----
+  fotoName: "", fotoFile: null, fotoPreviewUrl: null,
+  fotoSubmitting: false, fotoSubmitError: "", fotoSubmitted: false,
+  showFotoTutorial: true,
+};
+function setState(patch) { Object.assign(state, patch); render(); }
+
+/* ---------- Queue-ready notification (sound + toast + browser notification) ---------- */
+function playQueueBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.setValueAtTime(1175, ctx.currentTime + 0.14);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    o.start();
+    o.stop(ctx.currentTime + 0.46);
+  } catch (e) { /* audio not available, ignore */ }
+}
+function showQueueToast() {
+  const el = document.createElement("div");
+  el.className = "queue-toast";
+  el.innerHTML = `
+    <div class="queue-toast-icon">🔔</div>
+    <div style="flex:1; min-width:0;">
+      <p class="queue-toast-title">Antrian sudah 10!</p>
+      <p class="queue-toast-body">Owner udah kasih 10 permintaan masuk — boleh diterima sekaligus.</p>
+    </div>
+    <button class="queue-toast-close" aria-label="Tutup">✕</button>
+  `;
+  document.body.appendChild(el);
+  el.querySelector(".queue-toast-close").onclick = () => el.remove();
+  setTimeout(() => {
+    el.classList.add("queue-toast-hide");
+    setTimeout(() => el.remove(), 400);
+  }, 8000);
+}
+function notifyQueueReady() {
+  playQueueBeep();
+  showQueueToast();
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    try {
+      new Notification("RAPI TEAM", {
+        body: "Owner udah kasih 10 permintaan masuk — boleh diterima sekaligus.",
+      });
+    } catch (e) { /* some browsers require a service worker for this, ignore */ }
+  }
+}
+async function enableQueueNotifications() {
+  if (typeof Notification === "undefined") {
+    setState({ debugMsg: "⚠️ Browser ini gak dukung notifikasi HP." });
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  setState({ notifPermission: perm });
+}
+
+/* ---------- Small toast (dipakai buat feedback salin teks/link) ---------- */
+function showToast(message, icon) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.innerHTML = `<i data-lucide="${icon || 'check-circle-2'}" size="18" color="${palette.teal}"></i><p>${esc(message)}</p>`;
+  document.body.appendChild(el);
+  if (window.lucide) lucide.createIcons();
+  setTimeout(() => {
+    el.classList.add("toast-hide");
+    setTimeout(() => el.remove(), 350);
+  }, 2200);
+}
+
+/* ---------- Global error surfacing (debug aid) ---------- */
+window.addEventListener("error", (e) => {
+  const banner = document.createElement("div");
+  banner.style.cssText = "position:fixed; bottom:0; left:0; right:0; background:#D9705C; color:#0F1B22; font-size:12px; padding:10px 16px; z-index:9999; word-break:break-word;";
+  banner.textContent = "JS Error: " + (e.message || "unknown") + " (" + (e.filename||"") + ":" + (e.lineno||"") + ")";
+  document.body.appendChild(banner);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const banner = document.createElement("div");
+  banner.style.cssText = "position:fixed; bottom:0; left:0; right:0; background:#D9705C; color:#0F1B22; font-size:12px; padding:10px 16px; z-index:9999; word-break:break-word;";
+  banner.textContent = "Promise Error: " + (e.reason?.message || e.reason || "unknown");
+  document.body.appendChild(banner);
+});
+
+/* ---------- Firestore live sync ---------- */
+onSnapshot(accountsRef, async (snap) => {
+  if (snap.exists() && snap.data().list) {
+    state.accounts = snap.data().list;
+  } else {
+    await setDoc(accountsRef, { list: DEFAULT_ACCOUNTS });
+    state.accounts = DEFAULT_ACCOUNTS;
+  }
+  state.ready = true;
+  render();
+}, (err) => {
+  document.getElementById("app").innerHTML = `<div class="conn-banner" style="background:rgba(217,112,92,0.14); color:${palette.danger};">Gagal konek ke server: ${err.message}</div>`;
+});
+
+let prevQueueReady = false;
+onSnapshot(statusRef, async (snap) => {
+  if (snap.exists()) {
+    const d = snap.data();
+    state.queueCount = d.queueCount ?? 0;
+    state.pushMode = d.pushMode ?? false;
+    state.groupOpen = d.groupOpen ?? true;
+  } else {
+    await setDoc(statusRef, { queueCount: 0, pushMode: false, groupOpen: true });
+  }
+  const isReady = state.queueCount >= 10 && !state.pushMode;
+  const isStaffLoggedIn = (state.role === "owner" || state.role === "admin") && !!state.session;
+  if (isReady && !prevQueueReady && isStaffLoggedIn) {
+    notifyQueueReady();
+  }
+  prevQueueReady = isReady;
+  render();
+});
+
+onSnapshot(eventsRef, (snap) => {
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  list.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+  state.events = list;
+  render();
+});
+
+onSnapshot(fotoSessionRef, (snap) => {
+  if (snap.exists()) {
+    const s = snap.data();
+    state.fotoSession = s;
+    if (!state.formTanggal) {
+      state.formJudul = s.judul || "";
+      state.formTanggal = s.tanggal || "";
+      state.formJamMulai = s.jamMulai || "07:00";
+      state.formJamSelesai = s.jamSelesai || "12:00";
+      state.formAktif = s.aktif ?? true;
+    }
+  } else {
+    state.fotoSession = null;
+  }
+  render();
+});
+
+onSnapshot(photosRef, (snap) => {
+  const list = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  list.sort((a,b) => (b.submittedAt||0) - (a.submittedAt||0));
+  state.photos = list;
+  render();
+});
+
+/* ---------- Clock tick: update countdown & time-based badges without disrupting focus ---------- */
+let lastFotoStatus = null;
+let tickCount = 0;
+setInterval(() => {
+  state.now = new Date();
+  tickCount++;
+  const newFotoStatus = getFotoStatus();
+  if (newFotoStatus !== lastFotoStatus) {
+    lastFotoStatus = newFotoStatus;
+    render();
+  } else if (tickCount % 30 === 0) {
+    render(); // sesekali render penuh biar badge "Aktif 07.00-24.00" dkk ikut update
+  } else {
+    tickFotoCountdown();
+  }
+}, 1000);
+
+function tickFotoCountdown() {
+  const el = document.getElementById("countdownNum");
+  if (!el || !state.fotoSession) return;
+  const s = state.fotoSession;
+  const status = getFotoStatus();
+  let text = "";
+  if (status === "not_started") text = diffParts(state.now, new Date(`${s.tanggal}T${s.jamMulai}:00`));
+  else if (status === "open") text = diffParts(state.now, new Date(`${s.tanggal}T${s.jamSelesai}:00`));
+  else return;
+  el.textContent = text;
+  el.classList.remove("tick");
+  void el.offsetWidth;
+  el.classList.add("tick");
+}
+
+/* ---------- Status & waktu (foto collab) ---------- */
+function getFotoStatus() {
+  const s = state.fotoSession;
+  if (!s || !s.tanggal || !s.aktif) return "inactive";
+  const start = new Date(`${s.tanggal}T${(s.jamMulai||"07:00")}:00`);
+  const end   = new Date(`${s.tanggal}T${(s.jamSelesai||"12:00")}:00`);
+  const now = state.now;
+  if (now < start) return "not_started";
+  if (now >= start && now <= end) return "open";
+  return "expired";
+}
+function diffParts(from, to) {
+  let ms = Math.max(0, to - from);
+  const h = Math.floor(ms/3600000); ms -= h*3600000;
+  const m = Math.floor(ms/60000); ms -= m*60000;
+  const sec = Math.floor(ms/1000);
+  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+function fmtTanggal(t) {
+  if (!t) return "-";
+  const d = new Date(`${t}T00:00:00`);
+  return d.toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+}
+function fmtJam(ms) {
+  const d = new Date(ms);
+  return d.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
+}
+function chipForFotoStatus(status) {
+  if (status === "open") return `<span class="chip chip-teal"><span class="live-dot"></span> Terbuka</span>`;
+  if (status === "not_started") return chip("🕐 Belum mulai", "amber");
+  if (status === "expired") return chip("🔴 Kadaluwarsa", "danger");
+  return chip("⚪ Nonaktif", "muted");
+}
+function fotoCountdownBlock(status, s) {
+  const now = state.now;
+  if (status === "not_started") {
+    const start = new Date(`${s.tanggal}T${s.jamMulai}:00`);
+    return `<p class="countdown-label">Dibuka dalam</p><p class="countdown" id="countdownNum" style="color:${palette.amber};">${diffParts(now, start)}</p>`;
+  }
+  if (status === "open") {
+    const end = new Date(`${s.tanggal}T${s.jamSelesai}:00`);
+    return `<p class="countdown-label">Ditutup dalam</p><p class="countdown" id="countdownNum" style="color:${palette.teal};">${diffParts(now, end)}</p>`;
+  }
+  if (status === "expired") {
+    return `<p class="countdown-label">Status</p><p class="countdown" style="color:${palette.danger}; font-size:16px;">Sudah kadaluwarsa</p>`;
+  }
+  return "";
+}
+
+/* ---------- Kompres foto di browser (langsung disimpan sebagai base64 di Firestore) ---------- */
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+async function loadDrawableSource(file) {
+  if (window.createImageBitmap) {
+    try {
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch (e) {
+      try { return await createImageBitmap(file); } catch (e2) { /* fallback di bawah */ }
+    }
+  }
+  return await loadImageFile(file);
+}
+async function compressToDataURL(file) {
+  const source = await loadDrawableSource(file);
+  let width = source.width, height = source.height;
+  if (!width || !height) {
+    throw new Error("Foto gagal dibaca browser. Coba pilih foto lain atau screenshot dulu fotonya.");
+  }
+  const maxDim = 1280;
+  if (width > maxDim || height > maxDim) {
+    const scale = maxDim / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  let quality = 0.8, dataUrl = "";
+  let attempts = 0;
+  while (attempts < 8) {
+    canvas.width = width; canvas.height = height;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
+    dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const approxBytes = dataUrl.length * 0.75;
+    if (approxBytes <= MAX_BASE64_BYTES) break;
+    if (quality > 0.4) quality -= 0.1;
+    else { width = Math.round(width * 0.85); height = Math.round(height * 0.85); }
+    attempts++;
+  }
+  if (source.close) source.close();
+  if (!dataUrl || dataUrl.length < 1000) {
+    throw new Error("Gagal memproses foto (hasil kosong). Coba pilih foto lain.");
+  }
+  return dataUrl;
+}
+
+/* ---------- Member: pilih & upload foto collab (host di ImgBB) ---------- */
+const IMGBB_API_KEY = "48edaa743dba8ad51e9d8c0d52b208dd";
+async function uploadToImgbb(dataUrl, filename) {
+  const base64 = dataUrl.split(",")[1];
+  const formData = new FormData();
+  formData.append("image", base64);
+  if (filename) formData.append("name", filename);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+    method: "POST",
+    body: formData,
+  });
+  const json = await res.json();
+  if (!json || !json.success || !json.data) {
+    throw new Error((json && json.error && json.error.message) || "Upload foto ke server gagal.");
+  }
+  // display_url selalu berupa link langsung ke gambar (lengkap dengan nama file),
+  // jadi lebih aman dipakai buat <img src> dan link unduh daripada data.url.
+  const url = json.data.display_url || json.data.url;
+  if (!url) throw new Error("Server foto tidak mengembalikan link gambar.");
+  return url;
+}
+function onFotoFilePicked(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) { setState({ fotoSubmitError:"File harus berupa foto/gambar." }); return; }
+  const url = URL.createObjectURL(file);
+  setState({ fotoFile: file, fotoPreviewUrl: url, fotoSubmitError:"" });
+}
+async function submitFotoPhoto() {
+  if (getFotoStatus() !== "open") { setState({ fotoSubmitError:"Waktu pengiriman sudah tidak aktif." }); return; }
+  const nameTrim = state.fotoName.trim();
+  if (!nameTrim) { setState({ fotoSubmitError:"Isi nama kamu dulu ya." }); return; }
+  if (!state.fotoFile) { setState({ fotoSubmitError:"Pilih foto dulu ya." }); return; }
+  setState({ fotoSubmitting:true, fotoSubmitError:"" });
+  try {
+    const s = state.fotoSession;
+    const dataUrl = await compressToDataURL(state.fotoFile);
+    const safeName = nameTrim.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "member";
+    const photoUrl = await uploadToImgbb(dataUrl, `collab-${safeName}-${Date.now()}.jpg`);
+    await addDoc(photosRef, {
+      name: nameTrim,
+      photoUrl: photoUrl,
+      tanggal: s.tanggal,
+      submittedAt: Date.now(),
+    });
+    setState({ fotoSubmitting:false, fotoSubmitted:true, fotoFile:null, fotoPreviewUrl:null });
+  } catch (e) {
+    setState({ fotoSubmitting:false, fotoSubmitError:"Gagal mengirim foto: " + e.message });
+  }
+}
+function resetFotoForm() {
+  setState({ fotoName:"", fotoFile:null, fotoPreviewUrl:null, fotoSubmitError:"", fotoSubmitted:false });
+}
+
+/* ---------- Link & teks broadcast (foto collab) buat grup WA ---------- */
+function getShareLink() {
+  return `${location.origin}${location.pathname}`;
+}
+function buildBroadcastText(s) {
+  return `📸 COLLAB FOTO — RAPI TEAM 📸
+
+Halo semua! Yuk kirim foto collab kalian buat "${s.judul}" 🙌
+
+📅 ${fmtTanggal(s.tanggal)}
+⏰ Dibuka ${s.jamMulai} — ditutup ${s.jamSelesai} WIB
+
+Kirim fotonya lewat link di bawah ini ya (bukan ke WA Admin langsung), biar nggak numpuk chat & nomor Admin aman dari spam:
+${getShareLink()}
+
+Caranya gampang kok: buka link → pilih "Saya Member" → tab "Foto Collab" → isi nama → pilih 1 foto → tap Kirim Foto.
+
+⚠️ Kirim sebelum jam ${s.jamSelesai} ya, lewat dari itu link otomatis kadaluwarsa dan gak bisa kirim foto lagi.`;
+}
+async function copyPlainText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+}
+async function copyBroadcastText() {
+  if (!state.fotoSession) return;
+  try {
+    await copyPlainText(buildBroadcastText(state.fotoSession));
+    showToast("Teks broadcast berhasil disalin!");
+  } catch (e) { showToast("Gagal menyalin, coba salin manual.", "alert-triangle"); }
+}
+async function copyShareLink() {
+  try {
+    await copyPlainText(getShareLink());
+    showToast("Link berhasil disalin!");
+  } catch (e) { showToast("Gagal menyalin, coba salin manual.", "alert-triangle"); }
+}
+async function saveFotoSession() {
+  if (!state.formTanggal) { setState({ savedMsg:"Tanggal wajib diisi." }); return; }
+  setState({ savingSession:true, savedMsg:"" });
+  await setDoc(fotoSessionRef, {
+    judul: state.formJudul.trim() || "Collab Foto Rapi Team",
+    tanggal: state.formTanggal,
+    jamMulai: state.formJamMulai || "07:00",
+    jamSelesai: state.formJamSelesai || "12:00",
+    aktif: !!state.formAktif,
+  });
+  setState({ savingSession:false, savedMsg:"Sesi berhasil disimpan." });
+}
+async function deleteFotoPhoto(id) {
+  if (!confirm("Hapus foto ini?")) return;
+  await deleteDoc(doc(db, "rapiTeamCollabPhotos", id));
+}
+
+/* ---------- Role / navigation ---------- */
+function accountsForRole(role) {
+  const wanted = role === "owner" ? "Owner" : "Admin";
+  return state.accounts.filter(a => a.role === wanted);
+}
+function selectRole(role) {
+  const patch = { role, screen: "app", loginError: "", loginPassword: "" };
+  if (role === "member") {
+    setState(patch);
+    return;
+  }
+  const list = accountsForRole(role);
+  patch.loginName = list[0] ? list[0].name : "";
+  setState(patch);
+}
+function backToWelcome() {
+  setState({ screen: "welcome", role: null, session: null, loginError: "", loginPassword: "", pwMsg: "" });
+}
+
+/* ---------- Akun & login ---------- */
+async function saveAccounts(list) {
+  state.accounts = list;
+  await setDoc(accountsRef, { list });
+}
+async function saveStatus(patch) {
+  Object.assign(state, patch);
+  render();
+  await setDoc(statusRef, { queueCount: state.queueCount, pushMode: state.pushMode, groupOpen: state.groupOpen });
+}
+async function toggleGroupOpen() {
+  await saveStatus({ groupOpen: !state.groupOpen });
+}
+function doLogin() {
+  const allowedList = accountsForRole(state.role);
+  const acc = allowedList.find(a => a.name === state.loginName);
+  if (!acc) {
+    setState({ loginError: `Akun ini bukan ${ROLE_META[state.role].label.toLowerCase()}.` });
+    return;
+  }
+  if (acc.password === state.loginPassword) {
+    setState({ session: { name: acc.name, role: acc.role }, loginError: "", loginPassword: "" });
+    enableQueueNotifications();
+  } else {
+    setState({ loginError: "Nama atau password salah." });
+  }
+}
+function doLogout() { backToWelcome(); }
+async function changePassword() {
+  const acc = state.accounts.find(a => a.name === state.session?.name);
+  if (!acc || acc.password !== state.pwCurrent) { setState({ pwMsg: "Password lama salah." }); return; }
+  if (!state.pwNew.trim()) { setState({ pwMsg: "Password baru tidak boleh kosong." }); return; }
+  const list = state.accounts.map(a => a.name === state.session.name ? { ...a, password: state.pwNew.trim() } : a);
+  await saveAccounts(list);
+  setState({ pwCurrent: "", pwNew: "", pwMsg: "Password berhasil diganti." });
+}
+
+/* ---------- Acara ---------- */
+function buildEventText(e) {
+  return `╔══════════════════════════╗
+   🎉 EVENT RAPI TEAM 🎉
+╚══════════════════════════╝
+
+📢 Halo semua member Rapi Team!
+
+Owner mengadakan ${e.judul || "acara bareng"} nih! 🚶‍♂️🚶‍♀️
+Yuk yang mau ikut, merapat! 🔥
+
+╭──────────────
+📅 Tanggal   : ${e.tanggal || "[isi tanggal]"}
+⏰ Waktu     : ${e.waktu || "[isi jam]"}
+📍 Lokasi    : ${e.lokasi || "[isi lokasi]"}
+💰 Biaya     : ${e.biayaText || "[isi biaya]"}
+👥 Kuota     : ${e.kuota || "[tanpa batas]"}
+⏳ Batas Konfirmasi : ${e.batas || "[isi tanggal]"}
+╰──────────────
+
+📝 CARA KONFIRMASI (langsung dari HP, gak perlu chat manual):
+
+1️⃣ Buka link: ${getShareLink()}
+2️⃣ Pilih "Saya Member"
+3️⃣ Cari acara "${e.judul || "acara ini"}", isi Nama kamu
+4️⃣ Tap "Konfirmasi ikut" — selesai, gak perlu bikin akun/login
+
+📌 KETENTUAN:
+• Wajib konfirmasi sebelum batas waktu di atas
+• Diharapkan on time
+• Jaga sikap & nama baik Rapi Team selama acara
+• Dilarang bawa drama 😄
+
+Ditunggu partisipasinya ya, biar makin seru dan kompak! 💪
+
+— Admin Rapi Team (atas arahan Owner)`;
+}
+async function submitEvent() {
+  if (!state.form.judul.trim()) { setState({ debugMsg: "⚠️ Isi dulu Nama kegiatan sebelum simpan." }); return; }
+  const payload = { ...state.form, participants: [], createdAt: Date.now() };
+  setState({ saving: true, debugMsg: "" });
+  try {
+    const docRef = await addDoc(eventsRef, payload);
+    setState({
+      saving: false,
+      debugMsg: "✅ Acara tersimpan (id: " + docRef.id + ")",
+      form: { judul:"", tanggal:"", waktu:"", lokasi:"", biayaText:"Gratis", biayaNominal:"", kuota:"", batas:"" },
+      expanded: docRef.id
+    });
+  } catch (err) {
+    console.error(err);
+    setState({ saving: false, debugMsg: "❌ Gagal simpan acara — " + (err.code || "") + " " + err.message });
+  }
+}
+async function removeEvent(id) {
+  try {
+    await deleteDoc(doc(db, "rapiTeamEvents", id));
+    setState({ expanded: state.expanded === id ? null : state.expanded });
+  } catch (err) {
+    alert("Gagal hapus acara: " + err.message);
+    console.error(err);
+  }
+}
+async function copyEventText(e) {
+  try {
+    await navigator.clipboard.writeText(buildEventText(e));
+    setState({ copiedId: e.id });
+    setTimeout(() => setState({ copiedId: null }), 1800);
+  } catch {}
+}
+function getPartInput(eid) {
+  return state.partInputs[eid] || { name:"", due: (state.events.find(e => e.id===eid)?.biayaNominal) || "" };
+}
+function setPartInput(eid, patch) {
+  state.partInputs[eid] = { ...getPartInput(eid), ...patch };
+}
+async function addParticipant(eid) {
+  const input = getPartInput(eid);
+  if (!input.name.trim()) return;
+  const e = state.events.find(x => x.id === eid);
+  if (!e) return;
+  const nameTrim = input.name.trim();
+  const alreadyJoined = e.participants.some(p => p.name.toLowerCase() === nameTrim.toLowerCase());
+  if (alreadyJoined) return;
+  const participant = { id: Date.now().toString(), name: nameTrim, due: Number(input.due)||0, paid: 0 };
+  const newParticipants = [...e.participants, participant];
+  try {
+    await updateDoc(doc(db, "rapiTeamEvents", eid), { participants: newParticipants });
+    setPartInput(eid, { name:"", due: input.due });
+    render();
+  } catch (err) {
+    alert("Gagal tambah peserta: " + err.message);
+    console.error(err);
+  }
+}
+async function updateParticipant(eid, pid, patch) {
+  const e = state.events.find(x => x.id === eid);
+  if (!e) return;
+  const newParticipants = e.participants.map(p => p.id === pid ? { ...p, ...patch } : p);
+  try {
+    await updateDoc(doc(db, "rapiTeamEvents", eid), { participants: newParticipants });
+  } catch (err) {
+    alert("Gagal update peserta: " + err.message);
+    console.error(err);
+  }
+}
+async function removeParticipant(eid, pid) {
+  const e = state.events.find(x => x.id === eid);
+  if (!e) return;
+  const newParticipants = e.participants.filter(p => p.id !== pid);
+  try {
+    await updateDoc(doc(db, "rapiTeamEvents", eid), { participants: newParticipants });
+  } catch (err) {
+    alert("Gagal hapus peserta: " + err.message);
+    console.error(err);
+  }
+}
+function refreshJoinButton(eid) {
+  const input = document.getElementById(`member-input-${eid}`);
+  const btn = document.getElementById(`member-btn-${eid}`);
+  if (!input || !btn) return;
+  const e = state.events.find(x => x.id === eid);
+  if (!e) return;
+  const nameTrim = input.value.trim();
+  const alreadyJoined = nameTrim !== "" && e.participants.some(p => p.name.toLowerCase() === nameTrim.toLowerCase());
+  btn.disabled = alreadyJoined;
+  btn.className = alreadyJoined ? "btn-outline" : "btn-teal";
+  btn.innerHTML = `<i data-lucide="check" size="14"></i> ${alreadyJoined ? "Sudah ikut" : "Konfirmasi ikut"}`;
+  if (window.lucide) lucide.createIcons();
+}
+
+/* ---------- Render: Welcome screen ---------- */
+function renderWelcome() {
+  const roleColor = { owner:palette.amber, admin:palette.teal, member:palette.muted };
+  const roleBg = { owner:"rgba(232,163,61,0.16)", admin:"rgba(79,176,165,0.16)", member:"rgba(143,163,171,0.14)" };
+
+  return `
+  <div class="welcome-shell">
+    <div class="welcome-logo"><i data-lucide="shield-check" size="30" color="${palette.bg}"></i></div>
+    <p class="welcome-eyebrow">Selamat datang di</p>
+    <h1 class="display welcome-title">RAPI TEAM</h1>
+    <p class="welcome-sub">Satu panel buat acara, foto collab, dan tim Rapi Team. Pilih peran kamu untuk lanjut.</p>
+
+    <div class="role-grid">
+      ${Object.entries(ROLE_META).map(([key, meta]) => `
+        <button type="button" class="role-card" onclick="selectRole('${key}')">
+          <div class="role-icon" style="background:${roleBg[key]};">
+            <i data-lucide="${meta.icon}" size="19" color="${roleColor[key]}"></i>
+          </div>
+          <div>
+            <p class="role-name">Saya ${meta.label}</p>
+            <p class="role-desc">${meta.desc}</p>
+          </div>
+          <i data-lucide="chevron-right" size="18" class="role-arrow"></i>
+        </button>
+      `).join("")}
+    </div>
+
+    <p class="welcome-foot">Owner &amp; Admin login pakai akun terdaftar · Member cukup pilih acara / kirim foto, tanpa akun</p>
+  </div>`;
+}
+
+/* ---------- Render: staff tab "Buat Acara" ---------- */
+function renderAcaraTab(s) {
+  let html = `<div class="tab-panel" style="display:flex; flex-direction:column; gap:24px;">`;
+  const fields = [
+    { key:"judul", label:"Nama kegiatan", placeholder:"Jalan-jalan bareng" },
+    { key:"tanggal", label:"Tanggal", placeholder:"Minggu, 12 Juli 2026" },
+    { key:"waktu", label:"Waktu", placeholder:"09.00 WIB" },
+    { key:"lokasi", label:"Lokasi", placeholder:"Taman Kota" },
+    { key:"biayaText", label:"Biaya (teks di pengumuman)", placeholder:"Gratis / patungan" },
+    { key:"biayaNominal", label:"Biaya per orang (Rp, angka)", placeholder:"20000" },
+    { key:"kuota", label:"Kuota (opsional)", placeholder:"20 orang" },
+    { key:"batas", label:"Batas konfirmasi", placeholder:"Jumat, 10 Juli 2026" },
+  ];
+  html += `
+  <div class="card">
+    <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Buat acara baru</h2>
+    <div class="grid2">
+      ${fields.map(f => `
+        <div>
+          <label class="field-label">${f.label}</label>
+          <input class="input" style="margin-top:4px;" value="${esc(s.form[f.key])}" placeholder="${esc(f.placeholder)}"
+            oninput="state.form['${f.key}']=this.value" />
+        </div>
+      `).join("")}
+    </div>
+    ${s.debugMsg ? `<p style="margin:12px 0 0; font-size:12px; padding:8px 12px; border-radius:8px; background:${palette.surface2}; color:${s.debugMsg.startsWith('✅')?palette.teal:palette.danger}; word-break:break-word;">${esc(s.debugMsg)}</p>` : ""}
+    <button class="btn-amber" style="margin-top:16px;" ${s.saving?'disabled':''} onclick="submitEvent()"><i data-lucide="${s.saving?'loader':'plus'}" size="15"></i> ${s.saving?'Menyimpan…':'Simpan acara'}</button>
+  </div>`;
+
+  html += `<div><h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Acara tersimpan</h2>`;
+  if (s.events.length === 0) {
+    html += `<div class="card-dashed"><p style="color:${palette.muted}; font-size:13px; margin:0;">Belum ada acara. Buat dulu di atas.</p></div>`;
+  } else {
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
+    s.events.forEach(e => {
+      const totalDue = e.participants.reduce((sum,p)=>sum+(Number(p.due)||0),0);
+      const totalPaid = e.participants.reduce((sum,p)=>sum+(Number(p.paid)||0),0);
+      const lunasCount = e.participants.filter(p=>Number(p.paid)>=Number(p.due) && Number(p.due)>0).length;
+      const isOpen = s.expanded === e.id;
+      const pInput = getPartInput(e.id);
+
+      html += `<div class="event-card">
+        <button type="button" class="event-head" onclick="setState({expanded: state.expanded==='${e.id}'?null:'${e.id}'})">
+          <div style="min-width:0;">
+            <p class="display" style="font-size:14px; font-weight:600; margin:0;">${esc(e.judul || "(tanpa nama)")}</p>
+            <p style="color:${palette.muted}; font-size:12px; margin:2px 0 0;">${esc(e.tanggal || "Tanggal belum diisi")} · ${e.participants.length} peserta</p>
+          </div>
+          <div class="flex items-center gap-2">
+            ${totalDue>0 ? chip(`<i data-lucide="wallet" size="12"></i> ${rupiah(totalPaid)}/${rupiah(totalDue)}`, (lunasCount===e.participants.length && e.participants.length>0) ? "teal" : "amber") : ""}
+            <span class="flex items-center gap-1" style="color:${palette.amber}; font-size:12px; font-weight:500;">
+              ${isOpen ? "Tutup" : "Lihat detail"} <i data-lucide="${isOpen?"chevron-up":"chevron-down"}" size="16"></i>
+            </span>
+          </div>
+        </button>
+        ${isOpen ? `
+        <div class="event-body">
+          <div class="flex items-center gap-2 flex-wrap" style="margin:12px 0 16px;">
+            <button class="btn-outline" style="${s.copiedId===e.id?`background:${palette.teal}; color:${palette.bg};`:""}" onclick="copyEventText(state.events.find(x=>x.id==='${e.id}'))">
+              <i data-lucide="${s.copiedId===e.id?"check":"copy"}" size="13"></i> ${s.copiedId===e.id?"Tersalin":"Salin teks pengumuman"}
+            </button>
+            <button class="btn-outline-danger" onclick="removeEvent('${e.id}')"><i data-lucide="trash-2" size="13"></i> Hapus acara</button>
+          </div>
+          <p class="display" style="font-size:13px; font-weight:600; margin:0 0 8px;">Peserta & pembayaran</p>
+          <div class="flex gap-2 flex-wrap" style="margin-bottom:12px;">
+            <input class="input" style="flex:1; min-width:130px;" placeholder="Nama peserta" value="${esc(pInput.name)}"
+              oninput="setPartInput('${e.id}',{name:this.value})" />
+            <input class="input" type="number" style="width:144px;" placeholder="Wajib bayar (Rp)" value="${esc(pInput.due)}"
+              oninput="setPartInput('${e.id}',{due:this.value})" />
+            <button class="btn-amber" onclick="addParticipant('${e.id}')"><i data-lucide="plus" size="14"></i> Tambah</button>
+          </div>
+          ${e.participants.length===0 ? `<p style="color:${palette.muted}; font-size:12px;">Belum ada peserta yang daftar.</p>` : `
+            <div>
+            ${e.participants.map(p => {
+              const lunas = Number(p.paid) >= Number(p.due) && Number(p.due) > 0;
+              const sisa = Math.max(0, Number(p.due) - Number(p.paid));
+              return `<div class="part-row">
+                <span style="font-size:13px; font-weight:500; min-width:100px;">${esc(p.name)}</span>
+                <span style="color:${palette.muted}; font-size:11px;">Wajib</span>
+                <input type="number" class="input part-input" value="${esc(p.due)}" onchange="updateParticipant('${e.id}','${p.id}',{due:this.value})" />
+                <span style="color:${palette.muted}; font-size:11px;">Sudah bayar</span>
+                <input type="number" class="input part-input" value="${esc(p.paid)}" onchange="updateParticipant('${e.id}','${p.id}',{paid:this.value})" />
+                ${p.due>0 ? chip(lunas?"Lunas":`Sisa ${rupiah(sisa)}`, lunas?"teal":"danger") : chip("Gratis","muted")}
+                <button style="margin-left:auto; background:transparent; color:${palette.danger};" onclick="removeParticipant('${e.id}','${p.id}')"><i data-lucide="trash-2" size="14"></i></button>
+              </div>`;
+            }).join("")}
+            </div>
+          `}
+        </div>` : ""}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+/* ---------- Render: staff tab "Foto Collab" ---------- */
+function renderFotoTabStaff(s) {
+  const status = getFotoStatus();
+  const sessionPhotos = s.photos.filter(p => !s.fotoSession || p.tanggal === s.fotoSession.tanggal);
+  let html = `<div class="tab-panel" style="display:flex; flex-direction:column; gap:24px; max-width:640px;">`;
+
+  html += `<div class="card">
+    <div class="flex items-center justify-between" style="margin-bottom:12px;">
+      <h2 class="display" style="font-size:15px; font-weight:600; margin:0;">Atur sesi collab foto</h2>
+      ${chipForFotoStatus(status)}
+    </div>
+    <label class="field-label">Judul sesi</label>
+    <input class="input" style="margin-bottom:10px;" placeholder="Contoh: Collab Foto Meetup Juli" value="${esc(s.formJudul)}" oninput="state.formJudul=this.value" />
+    <label class="field-label">Tanggal</label>
+    <input class="input" style="margin-bottom:10px;" type="date" value="${esc(s.formTanggal)}" oninput="state.formTanggal=this.value" />
+    <div class="grid2" style="margin-bottom:12px;">
+      <div><label class="field-label">Jam mulai</label><input class="input" type="time" value="${esc(s.formJamMulai)}" oninput="state.formJamMulai=this.value" /></div>
+      <div><label class="field-label">Jam selesai</label><input class="input" type="time" value="${esc(s.formJamSelesai)}" oninput="state.formJamSelesai=this.value" /></div>
+    </div>
+    <label class="toggle" style="margin-bottom:14px;">
+      <input type="checkbox" ${s.formAktif?"checked":""} onchange="state.formAktif=this.checked" />
+      Sesi aktif (member bisa kirim foto selama jam buka)
+    </label>
+    ${s.savedMsg ? `<p style="color:${palette.teal}; font-size:12px; margin-bottom:10px;">${esc(s.savedMsg)}</p>` : ""}
+    <button class="btn-amber" ${s.savingSession?"disabled":""} onclick="saveFotoSession()">
+      <i data-lucide="save" size="15"></i> ${s.savingSession?"Menyimpan…":"Simpan Sesi"}
+    </button>
+  </div>`;
+
+  if (s.fotoSession && s.fotoSession.tanggal) {
+    const broadcastText = buildBroadcastText(s.fotoSession);
+    html += `<div class="card">
+      <p class="display" style="font-weight:600; margin:0 0 4px;">Link buat disebar ke grup WA</p>
+      <p style="color:${palette.muted}; font-size:12px; margin:0 0 12px;">Salin teksnya, paste langsung ke grup WA <b>Rapi Team</b>.</p>
+      <textarea class="broadcast-box" readonly onclick="this.select()">${esc(broadcastText)}</textarea>
+      <div class="flex gap-2" style="margin-top:12px;">
+        <button class="btn-teal" onclick="copyBroadcastText()"><i data-lucide="copy" size="14"></i> Salin Teks</button>
+        <button class="btn-outline" style="flex-shrink:0;" onclick="copyShareLink()"><i data-lucide="link" size="14"></i> Salin Link</button>
+      </div>
+    </div>`;
+
+    html += `<div class="tutorial-card anim-card">
+      <div class="flex items-center gap-2" style="margin-bottom:10px;">
+        <i data-lucide="sparkles" size="15" color="${palette.amber}"></i>
+        <span class="display" style="font-weight:600; font-size:13px;">Tutorial buat member (sudah otomatis ada di teks di atas)</span>
+      </div>
+      <ol class="tutorial-steps">
+        <li>Member buka link di atas</li>
+        <li>Pencet tombol <b>"Saya Member"</b> di halaman awal</li>
+        <li>Lanjut pencet tab <b>"Foto Collab"</b></li>
+        <li>Isi nama, pilih 1 foto, lalu tap <b>"Kirim Foto"</b></li>
+      </ol>
+    </div>`;
+  }
+
+  html += `<div class="card">
+    <div class="flex items-center justify-between" style="margin-bottom:12px;">
+      <p class="display" style="font-weight:600; margin:0;">Foto masuk (${sessionPhotos.length})</p>
+      ${chipForFotoStatus(status)}
+    </div>
+    ${sessionPhotos.length===0 ? `<p style="color:${palette.muted}; font-size:13px;">Belum ada foto yang dikirim member.</p>` : sessionPhotos.map(p => `
+      <div class="photo-row">
+        <img class="photo-thumb" src="${p.photoUrl || p.photoBase64}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'photo-thumb', style:'display:flex;align-items:center;justify-content:center;', innerHTML:'<span style=\\'font-size:10px;color:${palette.muted}\\'>❌</span>'}))" />
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-size:13px; font-weight:600;">${esc(p.name)}</p>
+          <p style="margin:2px 0 0; color:${palette.muted}; font-size:11px;">Dikirim ${fmtJam(p.submittedAt)}</p>
+        </div>
+        <a class="btn-outline" href="${p.photoUrl || p.photoBase64}" download="${esc(p.name)}-collab.jpg" target="_blank" rel="noopener"><i data-lucide="download" size="13"></i> Unduh</a>
+        <button class="btn-outline-danger" onclick="deleteFotoPhoto('${p.id}')"><i data-lucide="trash-2" size="13"></i></button>
+      </div>
+    `).join("")}
+    ${sessionPhotos.length>0 ? `<p style="color:${palette.muted}; font-size:11px; margin-top:10px;">Setelah diunduh, kirim manual foto pilihan kamu ke grup WA <b>Rapi Team</b>.</p>` : ""}
+  </div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+/* ---------- Render: staff tab "Tim Admin" ---------- */
+function renderAdminTab(s) {
+  return `<div class="tab-panel" style="max-width:640px; display:flex; flex-direction:column; gap:16px;">
+    <div class="card flex items-center justify-between flex-wrap gap-2">
+      <div>
+        <p class="display" style="font-weight:600; font-size:14px; margin:0;">Panduan tugas Admin</p>
+        <p style="color:${palette.muted}; font-size:12px; margin:2px 0 0;">Buka halaman tugas & checklist harian Admin.</p>
+      </div>
+      <a class="btn-amber" href="admin.html" target="_blank"><i data-lucide="clipboard-list" size="14"></i> Tugas Admin</a>
+    </div>
+    <div class="card">
+      <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Akun Admin & Owner</h2>
+      <p style="color:${palette.muted}; font-size:12px; margin:0 0 12px;">Hanya akun terdaftar ini yang bisa login ke panel — nggak bisa ditambah member sembarangan.</p>
+      <div>
+        ${s.accounts.map(a => `
+          <div class="acc-row">
+            <div class="flex items-center gap-3">
+              <div class="acc-avatar" style="background:${a.role==='Owner'?'rgba(232,163,61,0.16)':'rgba(79,176,165,0.16)'};">
+                <i data-lucide="${a.role==='Owner'?'crown':'shield-check'}" size="14" color="${a.role==='Owner'?palette.amber:palette.teal}"></i>
+              </div>
+              <div>
+                <p style="font-size:14px; font-weight:500; margin:0;">${esc(a.name)}${a.name===s.session.name?" (kamu)":""}</p>
+                ${chip(esc(a.role), a.role==='Owner'?'amber':'teal', 'margin-top:4px;')}
+              </div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 10px;">Ganti password kamu (${esc(s.session.name)})</h2>
+      <div class="grid2" style="margin-bottom:12px;">
+        <input class="input" type="password" placeholder="Password lama" value="${esc(s.pwCurrent)}" oninput="state.pwCurrent=this.value" />
+        <input class="input" type="password" placeholder="Password baru" value="${esc(s.pwNew)}" oninput="state.pwNew=this.value" />
+      </div>
+      ${s.pwMsg ? `<p style="color:${s.pwMsg.includes('berhasil')?palette.teal:palette.danger}; font-size:12px; margin-bottom:8px;">${esc(s.pwMsg)}</p>` : ""}
+      <button class="btn-amber" onclick="changePassword()"><i data-lucide="lock" size="14"></i> Simpan password baru</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- Render: member tab "Acara" ---------- */
+function renderMemberAcara(s) {
+  let html = `<div class="tab-panel">`;
+  html += `<h2 class="display" style="font-size:15px; font-weight:600; margin:0 0 4px;">Acara yang bisa diikuti</h2>
+    <p style="color:${palette.muted}; font-size:13px; margin:0 0 16px;">Pilih acara, isi nama, lalu konfirmasi ikut.</p>`;
+  if (s.showMemberTutorial) {
+    html += `
+      <div class="tutorial-card anim-card" style="margin-bottom:16px;">
+        <div class="flex items-center justify-between" style="margin-bottom:10px;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" size="15" color="${palette.amber}"></i>
+            <span class="display" style="font-weight:600; font-size:13px;">Cara konfirmasi ikut</span>
+          </div>
+          <button onclick="setState({showMemberTutorial:false})" style="background:transparent; color:${palette.muted}; padding:2px;"><i data-lucide="x" size="15"></i></button>
+        </div>
+        <ol class="tutorial-steps">
+          <li>Kamu udah di link yang benar ✅ (halaman ini)</li>
+          <li>Cari acara yang mau diikuti di bawah</li>
+          <li>Isi kolom <b>"Nama kamu"</b> di kartu acara itu</li>
+          <li>Tap tombol <b>"Konfirmasi ikut"</b> — selesai, gak perlu bikin akun</li>
+        </ol>
+      </div>
+    `;
+  }
+  if (s.events.length === 0) {
+    html += `<div class="card-dashed"><p style="color:${palette.muted}; font-size:13px; margin:0;">Belum ada acara yang dibuat Admin.</p></div>`;
+  } else {
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">
+      ${s.events.map(e => {
+        const pInput = getPartInput(e.id);
+        const nameTrim = pInput.name.trim();
+        const alreadyJoined = nameTrim !== "" && e.participants.some(p => p.name.toLowerCase() === nameTrim.toLowerCase());
+        return `<div class="card">
+          <p class="display" style="font-size:15px; font-weight:600; margin:0;">${esc(e.judul || "(tanpa nama)")}</p>
+          <div class="flex flex-wrap gap-3" style="margin:4px 0 12px; color:${palette.muted}; font-size:12px;">
+            ${e.tanggal?`<span>📅 ${esc(e.tanggal)}</span>`:""}
+            ${e.waktu?`<span>⏰ ${esc(e.waktu)}</span>`:""}
+            ${e.lokasi?`<span>📍 ${esc(e.lokasi)}</span>`:""}
+          </div>
+          <div class="flex flex-wrap gap-2" style="margin-bottom:12px;">
+            ${chip(`💰 ${esc(e.biayaText || "-")}`, "amber")}
+            ${e.kuota?chip(`👥 kuota ${esc(e.kuota)}`,"muted"):""}
+            ${e.batas?chip(`⏳ batas ${esc(e.batas)}`,"muted"):""}
+            ${chip(`${e.participants.length} sudah konfirmasi`,"teal")}
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <input class="input" style="flex:1; min-width:140px;" placeholder="Nama kamu" value="${esc(pInput.name)}"
+              oninput="setPartInput('${e.id}',{name:this.value}); refreshJoinButton('${e.id}')" id="member-input-${e.id}" />
+            <button class="${alreadyJoined?'btn-outline':'btn-teal'}" id="member-btn-${e.id}" ${alreadyJoined?'disabled':''} onclick="addParticipant('${e.id}')">
+              <i data-lucide="check" size="14"></i> ${alreadyJoined?"Sudah ikut":"Konfirmasi ikut"}
+            </button>
+          </div>
+          ${e.participants.length>0?`<p style="color:${palette.muted}; font-size:11px; margin-top:8px;">Sudah konfirmasi: ${e.participants.map(p=>esc(p.name)).join(", ")}</p>`:""}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+/* ---------- Render: member tab "Foto Collab" ---------- */
+function renderMemberFoto(s) {
+  const status = getFotoStatus();
+  let html = `<div class="member-wrap tab-panel" style="padding:0;">`;
+
+  if (s.showFotoTutorial) {
+    html += `<div class="tutorial-card anim-card" style="margin-bottom:14px;">
+      <div class="flex items-center justify-between" style="margin-bottom:10px;">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sparkles" size="15" color="${palette.amber}"></i>
+          <span class="display" style="font-weight:600; font-size:13px;">Cara kirim foto collab</span>
+        </div>
+        <button onclick="setState({showFotoTutorial:false})" style="background:transparent; color:${palette.muted}; padding:2px;"><i data-lucide="x" size="15"></i></button>
+      </div>
+      <ol class="tutorial-steps">
+        <li>Kamu udah di link yang benar ✅ (halaman ini)</li>
+        <li>Isi kolom <b>"Nama kamu"</b> pakai nama lengkap / panggilan</li>
+        <li>Tap kotak foto, lalu pilih <b>1 foto</b> collab dari galeri kamu</li>
+        <li>Tap tombol <b>"Kirim Foto"</b> — tunggu sampai muncul tanda berhasil</li>
+        <li>Selesai! Admin yang akan pilih & teruskan fotonya ke grup WA Rapi Team</li>
+      </ol>
+    </div>`;
+  }
+
+  if (!s.fotoSession) {
+    html += `<div class="card-dashed anim-card"><p style="color:${palette.muted}; font-size:13px; margin:0;">Belum ada sesi collab foto yang dibuka Admin.</p></div>`;
+  } else {
+    const fs = s.fotoSession;
+    html += `<div class="card anim-card">
+      <p class="display" style="font-weight:600; font-size:16px; margin:0 0 6px;">${esc(fs.judul)}</p>
+      <p style="color:${palette.muted}; font-size:13px; margin:0 0 10px;">📅 ${fmtTanggal(fs.tanggal)}</p>
+      <div class="flex gap-2 flex-wrap" style="margin-bottom:14px;">
+        ${chip(`⏰ Buka ${esc(fs.jamMulai)} – ${esc(fs.jamSelesai)}`, "muted")}
+        ${chipForFotoStatus(status)}
+      </div>
+      ${fotoCountdownBlock(status, fs)}
+    </div>`;
+
+    html += `<div class="card anim-card">
+      <p class="display" style="font-weight:600; margin:0 0 12px; font-size:14px;">📌 Kenapa kirim foto lewat sini, bukan langsung ke WA Admin?</p>
+      <ul style="margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:${palette.text}; line-height:1.55;"><i data-lucide="shield-check" size="16" style="flex-shrink:0; margin-top:2px; color:${palette.teal};"></i> Biar nomor WA Admin nggak kebanjiran chat & foto dari banyak member sekaligus — ini yang paling sering bikin nomor kena <b>spam / diblokir WhatsApp</b>.</li>
+        <li style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:${palette.text}; line-height:1.55;"><i data-lucide="zap" size="16" style="flex-shrink:0; margin-top:2px; color:${palette.teal};"></i> Lebih simpel & cepat — nggak perlu japri satu-satu, upload di sini aja, langsung tersimpan rapi.</li>
+        <li style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:${palette.text}; line-height:1.55;"><i data-lucide="send" size="16" style="flex-shrink:0; margin-top:2px; color:${palette.teal};"></i> Semua foto masuk otomatis rapi tersimpan di satu tempat. Admin yang akan pilih & teruskan ke grup WA <b>Rapi Team</b>.</li>
+      </ul>
+    </div>`;
+
+    if (status === "open") {
+      if (s.fotoSubmitted) {
+        html += `<div class="card anim-card" style="text-align:center;">
+          <i data-lucide="check-circle-2" size="34" color="${palette.teal}" class="check-pop"></i>
+          <p class="display" style="font-weight:600; margin:12px 0 4px;">Foto berhasil dikirim! 🎉</p>
+          <p style="color:${palette.muted}; font-size:13px; margin:0 0 14px;">Terima kasih, ${esc(s.fotoName)}. Admin akan meneruskan foto kamu ke grup WA Rapi Team.</p>
+          <button class="btn-outline" onclick="resetFotoForm()"><i data-lucide="rotate-ccw" size="14"></i> Kirim foto lain</button>
+        </div>`;
+      } else {
+        html += `<div class="card anim-card">
+          <label class="field-label">Nama kamu</label>
+          <input class="input" style="margin-bottom:14px;" placeholder="Nama lengkap / panggilan" value="${esc(s.fotoName)}" oninput="state.fotoName=this.value" />
+          <label class="field-label">Foto collab</label>
+          <label class="upload-box" style="display:block; margin-bottom:14px;">
+            ${s.fotoPreviewUrl
+              ? `<img src="${s.fotoPreviewUrl}" />`
+              : `<div><i data-lucide="image-plus" size="26" color="${palette.muted}"></i><p style="color:${palette.muted}; font-size:12px; margin:8px 0 0;">Tap untuk pilih 1 foto</p></div>`
+            }
+            <input type="file" accept="image/*" style="display:none;" onchange="onFotoFilePicked(this)" />
+          </label>
+          ${s.fotoSubmitError ? `<p style="color:${palette.danger}; font-size:12px; margin-bottom:10px;">${esc(s.fotoSubmitError)}</p>` : ""}
+          <button class="btn-teal ${s.fotoSubmitting?'':'cta-glow'}" ${s.fotoSubmitting?"disabled":""} onclick="submitFotoPhoto()">
+            ${s.fotoSubmitting ? `<span class="spinner"></span> Mengompres & mengirim…` : `<i data-lucide="send" size="15"></i> Kirim Foto`}
+          </button>
+        </div>`;
+      }
+    } else if (status === "not_started") {
+      html += `<div class="card-dashed anim-card"><p style="color:${palette.muted}; font-size:13px; margin:0;">Pengiriman foto belum dibuka. Balik lagi jam ${esc(fs.jamMulai)} ya!</p></div>`;
+    } else {
+      html += `<div class="card-dashed anim-card">
+        <i data-lucide="clock-alert" size="24" color="${palette.danger}"></i>
+        <p style="color:${palette.danger}; font-size:13px; font-weight:600; margin:8px 0 2px;">Waktu pengiriman sudah kadaluwarsa</p>
+        <p style="color:${palette.muted}; font-size:12px; margin:0;">Sesi ini ditutup jam ${esc(fs.jamSelesai)}. Tunggu sesi collab berikutnya dari Admin.</p>
+      </div>`;
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+/* ---------- Render utama ---------- */
+function render() {
+  const s = state;
+
+  if (!s.ready) {
+    document.getElementById("app").innerHTML = `<div class="conn-banner">Menyambungkan ke server…</div>`;
+    return;
+  }
+
+  if (s.screen === "welcome" || !s.role) {
+    document.getElementById("app").innerHTML = renderWelcome();
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  const isActive = s.now.getHours() >= 7;
+  const readyToAccept = s.queueCount >= 10 && !s.pushMode;
+  const isStaff = s.role === "owner" || s.role === "admin";
+  const roleLabel = s.role === "owner" ? "Owner" : s.role === "admin" ? "Admin" : "Member";
+  const isOwner = !!(s.session && s.session.role === "Owner");
+
+  let html = `<div class="app-fade">`;
+
+  html += `
+  <div class="header">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <div class="logo-box hero-logo"><i data-lucide="shield-check" size="18" color="${palette.bg}"></i></div>
+          <h1 class="display brand-title">RAPI TEAM</h1>
+        </div>
+        <p class="brand-sub">${isStaff ? (s.session ? `Masuk sebagai ${esc(s.session.name)} (${esc(s.session.role)})` : `Panel kendali ${roleLabel}`) : "Acara & foto collab member"}</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        ${chip(`<i data-lucide="${s.groupOpen ? "door-open" : "door-closed"}" size="13"></i> ${s.groupOpen ? "Grup Terbuka" : "Grup Tertutup"}`, s.groupOpen ? "teal" : "danger")}
+        ${isStaff && s.session ? `
+          ${chip(`<i data-lucide="clock" size="13"></i> ${isActive ? "Aktif · 07.00–24.00" : "Istirahat · 00.00–07.00"}`, isActive ? "teal" : "muted")}
+          <button class="${s.groupOpen ? "btn-outline-danger" : "btn-teal"}" onclick="toggleGroupOpen()">
+            <i data-lucide="${s.groupOpen ? "door-closed" : "door-open"}" size="13"></i> ${s.groupOpen ? "Tutup Grup" : "Buka Grup"}
+          </button>
+          <button class="btn-ghost-danger" onclick="doLogout()"><i data-lucide="log-out" size="13"></i> Keluar</button>
+        ` : `
+          <button class="btn-role-switch" onclick="backToWelcome()"><i data-lucide="arrow-left" size="13"></i> Ganti peran</button>
+        `}
+      </div>
+    </div>
+  </div>`;
+
+  if (isStaff && !s.session) {
+    const roleAccounts = accountsForRole(s.role);
+    html += `
+    <div class="login-shell">
+      <div class="login-card">
+        <div class="flex items-center gap-2" style="margin-bottom:16px;">
+          <i data-lucide="lock" size="16" color="${palette.amber}"></i>
+          <h2 class="display" style="font-size:15px; font-weight:600; margin:0;">Masuk sebagai ${roleLabel}</h2>
+        </div>
+        ${roleAccounts.length === 0 ? `
+          <p style="color:${palette.muted}; font-size:13px; margin:0 0 12px;">Belum ada akun ${roleLabel} yang terdaftar.</p>
+        ` : `
+          <label class="field-label">Nama</label>
+          <select class="input" style="margin-bottom:12px;" onchange="setState({loginName:this.value})">
+            ${roleAccounts.map(a => `<option value="${esc(a.name)}" ${a.name===s.loginName?"selected":""}>${esc(a.name)}</option>`).join("")}
+          </select>
+          <label class="field-label">Password</label>
+          <div class="pw-wrap" style="margin-bottom:12px;">
+            <input class="input" style="padding-right:36px;" type="${s.showPw?"text":"password"}" value="${esc(s.loginPassword)}"
+              oninput="state.loginPassword=this.value" onkeydown="if(event.key==='Enter'){doLogin();}" />
+            <button class="pw-toggle" onclick="setState({showPw:!state.showPw})"><i data-lucide="${s.showPw?"eye-off":"eye"}" size="15"></i></button>
+          </div>
+          ${s.loginError ? `<p style="color:${palette.danger}; font-size:12px; margin-bottom:8px;">${esc(s.loginError)}</p>` : ""}
+          <button class="btn-amber" style="width:100%; justify-content:center;" onclick="doLogin()"><i data-lucide="lock" size="14"></i> Masuk</button>
+        `}
+        <p style="color:${palette.muted}; font-size:11px; margin-top:12px; line-height:1.5;">
+          Hanya akun ${roleLabel} yang terdaftar yang bisa masuk ke panel ini. Bukan ${roleLabel}? <a href="javascript:void(0)" onclick="backToWelcome()" style="color:${palette.amber};">Ganti peran</a>.
+        </p>
+      </div>
+    </div>`;
+  }
+
+  if (isStaff && s.session) {
+    html += `
+    <div class="px" style="padding-top:20px; padding-bottom:20px; border-bottom:1px solid ${palette.line};">
+      <div class="card">
+        <div class="flex items-center justify-between flex-wrap gap-2" style="margin-bottom:12px;">
+          <div class="flex items-center gap-2">
+            <i data-lucide="trending-up" size="16" color="${palette.amber}"></i>
+            <span class="display" style="font-weight:600; font-size:14px;">Antrian Permintaan Masuk</span>
+          </div>
+          <label class="flex items-center gap-2" style="font-size:12px; color:${palette.muted}; cursor:pointer;">
+            <input type="checkbox" ${s.pushMode?"checked":""} onchange="saveStatus({pushMode:this.checked})" style="accent-color:${palette.amber};" />
+            Owner sedang push member
+          </label>
+        </div>
+        <div style="margin-bottom:12px;">
+          ${s.notifPermission === "granted"
+            ? chip(`<i data-lucide="bell" size="12"></i> Notifikasi aktif — bunyi & muncul di HP saat antrian tembus 10`, "teal")
+            : s.notifPermission === "denied"
+            ? chip(`<i data-lucide="bell-off" size="12"></i> Notifikasi diblokir di browser — nyalakan manual di setelan situs`, "muted")
+            : ""
+          }
+        </div>
+        <div class="flex items-center gap-3 flex-wrap" style="margin-bottom:8px;">
+          ${isOwner ? `
+            <button class="btn-outline" style="width:28px;height:28px;justify-content:center;padding:0;" onclick="saveStatus({queueCount:Math.max(0, state.queueCount-1)})">−</button>
+            <span class="display" style="font-size:20px; font-weight:700; min-width:24px; text-align:center;">${s.queueCount}</span>
+            <button class="btn-outline" style="width:28px;height:28px;justify-content:center;padding:0;" onclick="saveStatus({queueCount:state.queueCount+1})">+</button>
+            <span style="color:${palette.muted}; font-size:12px;">permintaan menunggu / target 10</span>
+          ` : `
+            <span class="display" style="font-size:20px; font-weight:700; min-width:24px; text-align:center;">${s.queueCount}</span>
+            <span style="color:${palette.muted}; font-size:12px;">permintaan menunggu / target 10 · <i data-lucide="lock" size="11" style="vertical-align:-1px;"></i> cuma Owner yang bisa ubah angka</span>
+          `}
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${Math.min(100,(s.queueCount/10)*100)}%; background:${readyToAccept?palette.teal:palette.amber};"></div>
+        </div>
+        <p style="color:${readyToAccept?palette.teal:palette.muted}; font-size:13px; font-weight:500; margin-bottom:${readyToAccept?"10px":"0"};">
+          ${s.pushMode ? "⏸ Ditahan — Owner sedang push member. Jangan terima request dulu." : readyToAccept ? "✅ Sudah 10+ request — boleh diterima sekaligus." : `⏳ Belum cukup — tunggu ${10 - s.queueCount} request lagi sebelum diterima.`}
+        </p>
+        ${readyToAccept && !isOwner ? `
+          <button class="btn-teal" onclick="saveStatus({queueCount:0})"><i data-lucide="check-check" size="14"></i> Siap, sudah diproses</button>
+        ` : ""}
+        ${readyToAccept && isOwner ? `
+          <p style="color:${palette.muted}; font-size:12px; margin:0;"><i data-lucide="lock" size="11" style="vertical-align:-1px;"></i> Tombol "Siap, sudah diproses" ada di layar Admin.</p>
+        ` : ""}
+      </div>
+    </div>`;
+  }
+
+  if (isStaff && s.session) {
+    html += `
+    <div class="px" style="padding-top:20px;">
+      <div class="tabs">
+        <button class="${s.tab==='acara'?'active':''}" onclick="setState({tab:'acara'})"><i data-lucide="calendar-plus" size="15"></i> Buat Acara</button>
+        <button class="${s.tab==='foto'?'active':''}" onclick="setState({tab:'foto'})"><i data-lucide="camera" size="15"></i> Foto Collab</button>
+        <button class="${s.tab==='admin'?'active':''}" onclick="setState({tab:'admin'})"><i data-lucide="users" size="15"></i> Tim Admin</button>
+      </div>
+    </div>`;
+
+    html += `<div class="px" style="padding-top:24px; padding-bottom:24px;">`;
+    if (s.tab === "acara") html += renderAcaraTab(s);
+    else if (s.tab === "foto") html += renderFotoTabStaff(s);
+    else if (s.tab === "admin") html += renderAdminTab(s);
+    html += `</div>`;
+  }
+
+  if (s.role === "member") {
+    html += `<div class="px" style="padding-top:24px;">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="tabs">
+          <button class="${s.memberTab==='acara'?'active':''}" onclick="setState({memberTab:'acara'})"><i data-lucide="calendar-plus" size="15"></i> Acara</button>
+          <button class="${s.memberTab==='foto'?'active':''}" onclick="setState({memberTab:'foto'})"><i data-lucide="camera" size="15"></i> Foto Collab</button>
+        </div>
+        <a class="btn-outline" href="rules-member.html" target="_blank"><i data-lucide="scroll-text" size="14"></i> Rules Member</a>
+      </div>
+    </div>`;
+    html += `<div class="px" style="padding-top:24px; padding-bottom:24px; max-width:600px;">`;
+    html += s.memberTab === "foto" ? renderMemberFoto(s) : renderMemberAcara(s);
+    html += `</div>`;
+  }
+
+  html += `<div class="footer-note">Semua data (akun, acara, foto, peserta, pembayaran) tersimpan di Firestore dan sinkron otomatis di semua perangkat.</div>`;
+  html += `</div>`;
+
+  document.getElementById("app").innerHTML = html;
+  if (window.lucide) lucide.createIcons();
+}
+
+/* expose functions used by inline onclick/oninput handlers */
+window.state = state;
+window.setState = setState;
+window.selectRole = selectRole;
+window.backToWelcome = backToWelcome;
+window.enableQueueNotifications = enableQueueNotifications;
+window.saveStatus = saveStatus;
+window.toggleGroupOpen = toggleGroupOpen;
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.changePassword = changePassword;
+window.submitEvent = submitEvent;
+window.removeEvent = removeEvent;
+window.copyEventText = copyEventText;
+window.setPartInput = setPartInput;
+window.addParticipant = addParticipant;
+window.updateParticipant = updateParticipant;
+window.removeParticipant = removeParticipant;
+window.refreshJoinButton = refreshJoinButton;
+window.onFotoFilePicked = onFotoFilePicked;
+window.submitFotoPhoto = submitFotoPhoto;
+window.resetFotoForm = resetFotoForm;
+window.saveFotoSession = saveFotoSession;
+window.deleteFotoPhoto = deleteFotoPhoto;
+window.copyBroadcastText = copyBroadcastText;
+window.copyShareLink = copyShareLink;
+
+render();
+</script>
+</body>
+</html>
