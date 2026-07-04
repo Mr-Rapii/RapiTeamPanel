@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daftarkan Member Baru — RAPI TEAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+    --amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{cursor:pointer; border:none; font-family:inherit;}
+  input{font-family:inherit;}
+  ::selection{background:rgba(232,163,61,0.35);}
+
+  .page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+  .glow{position:absolute; border-radius:999px; filter:blur(80px); opacity:0.3;}
+  .glow-amber{width:300px; height:300px; background:var(--amber); top:-70px; left:-70px; animation:driftA 10s ease-in-out infinite;}
+  .glow-teal{width:340px; height:340px; background:var(--teal); bottom:-90px; right:-80px; animation:driftB 12s ease-in-out infinite;}
+  @keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,24px);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-26px,-18px);}}
+  #app{position:relative; z-index:1; max-width:640px; margin:0 auto;}
+
+  .header{padding:28px 20px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  @media(min-width:640px){.header{padding:28px 32px 18px;}}
+  .logo-box{width:32px;height:32px;border-radius:8px;background:var(--amber);display:flex;align-items:center;justify-content:center; flex-shrink:0;}
+  .brand-title{font-size:19px; font-weight:700; letter-spacing:-0.02em; margin:0;}
+  .brand-sub{color:var(--muted); font-size:12px; margin:2px 0 0 40px;}
+  .btn-back{display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text); border:1px solid var(--line); background:var(--surface); font-family:'Space Grotesk',sans-serif; text-decoration:none; transition:background .15s;}
+  .btn-back:hover{background:var(--surface2);}
+
+  .section{padding:24px 20px; animation:fadeUp .4s ease both;}
+  @media(min-width:640px){.section{padding:24px 32px;}}
+
+  .card{border-radius:16px; padding:18px; background:var(--surface); border:1px solid var(--line); margin-bottom:14px;}
+  .field-label{color:var(--muted); font-size:12px; display:block; margin-bottom:6px;}
+  .input{width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:8px; font-size:14px; outline:none; transition:border-color .15s;}
+  .input:focus{border-color:var(--amber);}
+  .btn-amber{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:500; background:var(--amber); color:var(--bg); font-family:'Space Grotesk',sans-serif; transition:transform .12s, filter .12s; width:100%; margin-top:6px;}
+  .btn-amber:hover{filter:brightness(1.08);} .btn-amber:active{transform:scale(0.98);}
+  .btn-amber:disabled{opacity:0.6; cursor:not-allowed;}
+
+  .msg{font-size:12.5px; margin:8px 0 0; padding:8px 10px; border-radius:8px;}
+  .msg-ok{background:rgba(79,176,165,0.14); color:var(--teal);}
+  .msg-err{background:rgba(217,112,92,0.14); color:var(--danger);}
+
+  .member-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-radius:12px; background:var(--surface2); border:1px solid var(--line); margin-bottom:8px;}
+  .member-wa{font-family:'JetBrains Mono',monospace; font-size:13px;}
+  .member-time{color:var(--muted); font-size:11px; margin-top:2px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid; white-space:nowrap;}
+  .chip-amber{background:rgba(232,163,61,0.14); color:var(--amber); border-color:rgba(232,163,61,0.35);}
+  .chip-teal{background:rgba(79,176,165,0.14); color:var(--teal); border-color:rgba(79,176,165,0.35);}
+
+  .section-title{display:flex; align-items:center; gap:8px; margin:0 0 12px;}
+  .section-title h2{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0;}
+  .empty-note{color:var(--muted); font-size:12.5px; text-align:center; padding:20px 0;}
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+  .loading{color:var(--muted); font-size:12.5px; text-align:center; padding:20px 0;}
+</style>
+</head>
+<body>
+
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+
+<div id="app">
+  <div class="header">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="logo-box"><i data-lucide="user-plus" size="18" color="#0F1B22"></i></div>
+        <h1 class="display brand-title">Daftar Member Baru</h1>
+      </div>
+      <p class="brand-sub">Khusus Admin &amp; Owner</p>
+    </div>
+    <a class="btn-back" href="admin.html"><i data-lucide="arrow-left" size="14"></i> Kembali</a>
+  </div>
+
+  <div class="section">
+    <div class="card">
+      <div class="section-title"><i data-lucide="phone" size="16" color="#E8A33D"></i><h2>Daftarkan Nomor WA</h2></div>
+      <p style="color:var(--muted); font-size:12.5px; margin:0 0 14px;">Isi begitu request join diterima. Sistem bakal ingetin member ini otomatis via WA kalau dalam 24 jam belum isi form Intro.</p>
+      <label class="field-label">Nomor WhatsApp Member</label>
+      <input class="input" id="waInput" type="tel" placeholder="08xxxxxxxxxx" />
+      <button class="btn-amber" id="btnDaftar" onclick="daftarkanMember()"><i data-lucide="user-plus" size="15"></i> Daftarkan</button>
+      <div id="formMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i data-lucide="list" size="16" color="#4FB0A5"></i><h2>Member Menunggu Intro</h2></div>
+      <div id="memberList" class="loading">Memuat data...</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection, onSnapshot,
+  serverTimestamp, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB674t6fiJ8HT9ENfeS3Vzv-BSGQTQ-3BI",
+  authDomain: "rapi-dev-43ddf.firebaseapp.com",
+  projectId: "rapi-dev-43ddf",
+  storageBucket: "rapi-dev-43ddf.firebasestorage.app",
+  messagingSenderId: "392684134756",
+  appId: "1:392684134756:web:6ef9ed85f4fb29db29da71"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const membersCol = collection(db, "rapiTeamMembers");
+
+/* Normalisasi nomor WA jadi format 62xxxxxxxxxx (dipakai sebagai ID dokumen) */
+function normalizeWa(raw) {
+  let n = raw.replace(/[^0-9]/g, "");
+  if (n.startsWith("0")) n = "62" + n.slice(1);
+  if (n.startsWith("8")) n = "62" + n;
+  return n;
+}
+
+function esc(str) {
+  return String(str ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+}
+
+function showMsg(text, ok) {
+  const el = document.getElementById("formMsg");
+  el.innerHTML = `<div class="msg ${ok ? 'msg-ok' : 'msg-err'}">${esc(text)}</div>`;
+}
+
+window.daftarkanMember = async function () {
+  const input = document.getElementById("waInput");
+  const btn = document.getElementById("btnDaftar");
+  const raw = input.value.trim();
+  if (!raw || raw.replace(/[^0-9]/g, "").length < 9) {
+    showMsg("Nomor WA belum valid.", false);
+    return;
+  }
+  const waId = normalizeWa(raw);
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" size="15"></i> Menyimpan...`;
+  if (window.lucide) lucide.createIcons();
+  try {
+    const ref = doc(membersCol, waId);
+    const existing = await getDoc(ref);
+    if (existing.exists() && existing.data().status_intro === "belum") {
+      showMsg("Nomor ini sudah terdaftar dan masih menunggu Intro.", false);
+    } else {
+      await setDoc(ref, {
+        nomor_wa: waId,
+        join_at: serverTimestamp(),
+        status_intro: "belum",
+        reminder_terkirim: 0
+      });
+      showMsg("Member berhasil didaftarkan. Reminder otomatis aktif.", true);
+      input.value = "";
+    }
+  } catch (e) {
+    showMsg("Gagal menyimpan: " + e.message, false);
+  }
+  btn.disabled = false;
+  btn.innerHTML = `<i data-lucide="user-plus" size="15"></i> Daftarkan`;
+  if (window.lucide) lucide.createIcons();
+};
+
+function timeAgo(ts) {
+  if (!ts) return "-";
+  const diffMs = Date.now() - ts.toDate().getTime();
+  const h = Math.floor(diffMs / 3600000);
+  if (h < 1) return "< 1 jam lalu";
+  if (h < 24) return `${h} jam lalu`;
+  return `${Math.floor(h / 24)} hari lalu`;
+}
+
+const q = query(membersCol, orderBy("join_at", "desc"));
+onSnapshot(q, (snap) => {
+  const listEl = document.getElementById("memberList");
+  const belum = [];
+  snap.forEach(d => {
+    const data = d.data();
+    if (data.status_intro === "belum") belum.push(data);
+  });
+  if (belum.length === 0) {
+    listEl.innerHTML = `<div class="empty-note">Semua member sudah Intro. 🎉</div>`;
+    return;
+  }
+  listEl.innerHTML = belum.map(m => `
+    <div class="member-row">
+      <div>
+        <p class="member-wa">${esc(m.nomor_wa)}</p>
+        <p class="member-time">Join ${timeAgo(m.join_at)}</p>
+      </div>
+      <span class="chip ${m.reminder_terkirim > 0 ? 'chip-teal' : 'chip-amber'}">
+        ${m.reminder_terkirim > 0 ? 'Sudah diingatkan' : 'Belum diingatkan'}
+      </span>
+    </div>
+  `).join("");
+  if (window.lucide) lucide.createIcons();
+}, (err) => {
+  document.getElementById("memberList").innerHTML = `<div class="empty-note">Gagal memuat: ${esc(err.message)}</div>`;
+});
+
+if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>
