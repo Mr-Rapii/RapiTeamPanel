@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rules Member — RAPI TEAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+    --amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .px{padding-left:20px; padding-right:20px;}
+  @media(min-width:640px){ .px{padding-left:32px; padding-right:32px;} }
+  a{color:inherit;}
+  ::selection{background:rgba(232,163,61,0.35);}
+
+  /* Ambient background */
+  .page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+  .glow{position:absolute; border-radius:999px; filter:blur(80px); opacity:0.3;}
+  .glow-amber{width:300px; height:300px; background:var(--amber); top:-70px; left:-70px; animation:driftA 10s ease-in-out infinite;}
+  .glow-teal{width:340px; height:340px; background:var(--teal); bottom:-90px; right:-80px; animation:driftB 12s ease-in-out infinite;}
+  @keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,24px);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-26px,-18px);}}
+  #app{position:relative; z-index:1; max-width:720px; margin:0 auto;}
+
+  /* Header */
+  .header{padding:28px 20px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  @media(min-width:640px){.header{padding:28px 32px 18px;}}
+  .logo-box{width:32px;height:32px;border-radius:8px;background:var(--amber);display:flex;align-items:center;justify-content:center; flex-shrink:0;}
+  .brand-title{font-size:19px; font-weight:700; letter-spacing:-0.02em; margin:0;}
+  .brand-sub{color:var(--muted); font-size:12px; margin:2px 0 0 40px;}
+  .btn-back{display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text); border:1px solid var(--line); background:var(--surface); font-family:'Space Grotesk',sans-serif; text-decoration:none; transition:background .15s;}
+  .btn-back:hover{background:var(--surface2);}
+
+  .hero{padding:28px 20px 4px; text-align:center;}
+  @media(min-width:640px){.hero{padding:28px 32px 4px;}}
+  .hero-icon{width:52px;height:52px;border-radius:14px;background:rgba(217,112,92,0.16); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; animation:fadeUp .5s ease both;}
+  .hero-title{font-size:clamp(22px,5.6vw,30px); font-weight:700; letter-spacing:-0.02em; margin:0 0 8px; animation:fadeUp .5s ease .05s both;}
+  .hero-sub{color:var(--muted); font-size:13px; max-width:460px; margin:0 auto; line-height:1.6; animation:fadeUp .5s ease .1s both;}
+
+  .section{padding:20px 20px; animation:fadeUp .5s ease both;}
+  @media(min-width:640px){.section{padding:20px 32px;}}
+  .section-title{display:flex; align-items:center; gap:8px; margin:0 0 12px;}
+  .section-title h2{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0;}
+
+  .card{border-radius:16px; padding:18px; background:var(--surface); border:1px solid var(--line); margin-bottom:10px;}
+  .quote-card{border-radius:16px; padding:18px; background:rgba(232,163,61,0.08); border:1px solid rgba(232,163,61,0.3); font-style:italic; font-size:13px; line-height:1.7; color:var(--text);}
+
+  .check-list{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;}
+  .check-list li{display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.55;}
+  .check-list li i{flex-shrink:0; margin-top:2px;}
+
+  .ban-list{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .ban-item{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:12px; background:rgba(217,112,92,0.08); border:1px solid rgba(217,112,92,0.28);}
+  .ban-num{flex-shrink:0; width:24px; height:24px; border-radius:999px; background:rgba(217,112,92,0.18); color:var(--danger); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  .ban-text{font-size:13.5px; line-height:1.5; color:var(--text);}
+
+  .sanction-track{display:flex; flex-direction:column; gap:0;}
+  .sanction-step{display:flex; gap:14px; padding:12px 0; position:relative;}
+  .sanction-step:not(:last-child)::before{content:''; position:absolute; left:15px; top:38px; bottom:-4px; width:1px; background:var(--line);}
+  .sanction-dot{flex-shrink:0; width:32px; height:32px; border-radius:999px; background:var(--surface2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--amber); z-index:1;}
+  .sanction-body p{margin:0;}
+  .sanction-body .sanction-title{font-weight:600; font-size:13.5px; font-family:'Space Grotesk',sans-serif;}
+  .sanction-body .sanction-desc{color:var(--muted); font-size:12.5px; margin-top:2px; line-height:1.5;}
+
+  .hours-grid{display:grid; grid-template-columns:1fr; gap:10px;}
+  @media(min-width:560px){.hours-grid{grid-template-columns:1fr 1fr 1fr;}}
+  .hour-card{border-radius:12px; padding:14px; background:var(--surface2); border:1px solid var(--line); text-align:center;}
+  .hour-card .hour-time{font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:600; color:var(--teal);}
+  .hour-card .hour-label{font-size:11.5px; color:var(--muted); margin-top:4px;}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:500;border:1px solid;}
+  .chip-danger{background:rgba(217,112,92,0.14); color:var(--danger); border-color:rgba(217,112,92,0.35);}
+  .chip-amber{background:rgba(232,163,61,0.14); color:var(--amber); border-color:rgba(232,163,61,0.35);}
+  .chip-teal{background:rgba(79,176,165,0.14); color:var(--teal); border-color:rgba(79,176,165,0.35);}
+
+  .footer-quote{padding:28px 20px 40px; text-align:center;}
+  .footer-quote p.motto{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--amber); margin:0 0 6px;}
+  .footer-quote p.small{color:var(--muted); font-size:11px; margin:0;}
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+
+<div id="app">
+
+  <div class="header">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="logo-box"><i data-lucide="shield-check" size="18" color="#0F1B22"></i></div>
+        <h1 class="display brand-title">RAPI TEAM</h1>
+      </div>
+      <p class="brand-sub">Rules &amp; Larangan Member</p>
+    </div>
+    <a class="btn-back" href="javascript:history.back()"><i data-lucide="arrow-left" size="14"></i> Kembali</a>
+  </div>
+
+  <div class="hero">
+    <div class="hero-icon"><i data-lucide="scroll-text" size="24" color="#D9705C"></i></div>
+    <h1 class="display hero-title">Rules Member Rapi Team</h1>
+    <p class="hero-sub">Ringkasan dari Buku Panduan Resmi Rapi Team (Bab V — SOP Member). Wajib dibaca &amp; dipatuhi seluruh anggota grup WA Rapi Team.</p>
+  </div>
+
+  <!-- Ikrar -->
+  <div class="section">
+    <div class="quote-card">
+      "Saya berjanji akan mematuhi seluruh aturan yang berlaku di Rapi Team, menjaga sopan santun, tidak melakukan spam maupun promosi tanpa izin, serta menjaga nama baik komunitas ini."
+    </div>
+  </div>
+
+  <!-- Larangan -->
+  <div class="section">
+    <div class="section-title">
+      <i data-lucide="ban" size="17" color="#D9705C"></i>
+      <h2>🚫 Larangan Member</h2>
+    </div>
+    <p style="color:var(--muted); font-size:12.5px; margin:0 0 14px;">Hal-hal berikut dilarang dilakukan selama menjadi bagian dari Rapi Team. Melanggar salah satu bisa kena tindakan sesuai sistem sanksi di bawah.</p>
+    <div class="ban-list">
+      <div class="ban-item"><div class="ban-num">1</div><div class="ban-text">Melakukan <b>spam</b> dalam bentuk apa pun — teks, stiker, foto, video, maupun voice note.</div></div>
+      <div class="ban-item"><div class="ban-num">2</div><div class="ban-text">Melakukan <b>promosi</b> produk, jasa, maupun konten pribadi tanpa izin resmi dari Admin/Owner.</div></div>
+      <div class="ban-item"><div class="ban-num">3</div><div class="ban-text">Menyebarkan <b>tautan grup</b> kepada pihak luar tanpa izin.</div></div>
+      <div class="ban-item"><div class="ban-num">4</div><div class="ban-text">Bersikap <b>toxic</b>, menghina, merendahkan, atau melakukan perundungan terhadap anggota lain.</div></div>
+      <div class="ban-item"><div class="ban-num">5</div><div class="ban-text">Melakukan <b>penipuan</b> maupun modus <b>scam</b> dalam bentuk apa pun.</div></div>
+      <div class="ban-item"><div class="ban-num">6</div><div class="ban-text">Menggunakan <b>akun palsu</b> atau menyamar sebagai orang lain.</div></div>
+      <div class="ban-item"><div class="ban-num">7</div><div class="ban-text">Menyebarkan <b>konten pornografi</b> maupun konten negatif lain yang melanggar norma kesusilaan.</div></div>
+      <div class="ban-item"><div class="ban-num">8</div><div class="ban-text">Melakukan <b>provokasi</b> yang berpotensi memecah belah kerukunan antaranggota.</div></div>
+    </div>
+  </div>
+
+  <!-- Hak & Kewajiban -->
+  <div class="section">
+    <div class="section-title">
+      <i data-lucide="scale" size="17" color="#4FB0A5"></i>
+      <h2>Hak &amp; Kewajiban Member</h2>
+    </div>
+    <div class="card">
+      <p class="display" style="font-weight:600; font-size:13px; margin:0 0 10px; color:var(--teal);">✅ Hak Kamu</p>
+      <ul class="check-list">
+        <li><i data-lucide="check" size="15" color="#4FB0A5"></i> Diperlakukan setara tanpa diskriminasi.</li>
+        <li><i data-lucide="check" size="15" color="#4FB0A5"></i> Berpartisipasi dalam seluruh kegiatan komunitas.</li>
+        <li><i data-lucide="check" size="15" color="#4FB0A5"></i> Menyampaikan pendapat, kritik, dan saran secara sehat.</li>
+        <li><i data-lucide="check" size="15" color="#4FB0A5"></i> Mendapat perlindungan dari perundungan &amp; pelecehan.</li>
+        <li><i data-lucide="check" size="15" color="#4FB0A5"></i> Meminta bantuan Admin/Owner saat mengalami kesulitan.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="display" style="font-weight:600; font-size:13px; margin:0 0 10px; color:var(--amber);">📌 Kewajiban Kamu</p>
+      <ul class="check-list">
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Mematuhi seluruh aturan dalam buku panduan.</li>
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Menjaga sopan santun ke sesama anggota.</li>
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Berpartisipasi wajar, tidak mendominasi grup.</li>
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Menghormati privasi &amp; batasan personal anggota lain.</li>
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Melapor ke Admin kalau menemukan pelanggaran.</li>
+        <li><i data-lucide="dot" size="15" color="#E8A33D"></i> Menjaga nama baik komunitas, di dalam &amp; luar grup.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Sistem sanksi -->
+  <div class="section">
+    <div class="section-title">
+      <i data-lucide="gavel" size="17" color="#E8A33D"></i>
+      <h2>Sistem Sanksi Berjenjang</h2>
+    </div>
+    <p style="color:var(--muted); font-size:12.5px; margin:0 0 6px;">Kalau ketahuan melanggar, tahapan tindakannya begini — makin berat pelanggaran, makin cepat naik tahap (bahkan bisa lompat langsung ke Kick/Blacklist untuk pelanggaran berat).</p>
+    <div class="card">
+      <div class="sanction-track">
+        <div class="sanction-step">
+          <div class="sanction-dot">1</div>
+          <div class="sanction-body"><p class="sanction-title">Hapus Pesan</p><p class="sanction-desc">Admin menghapus pesan yang melanggar, tanpa sanksi tambahan.</p></div>
+        </div>
+        <div class="sanction-step">
+          <div class="sanction-dot">2</div>
+          <div class="sanction-body"><p class="sanction-title">Peringatan</p><p class="sanction-desc">Teguran resmi pertama dari Admin.</p></div>
+        </div>
+        <div class="sanction-step">
+          <div class="sanction-dot">3</div>
+          <div class="sanction-body"><p class="sanction-title">Peringatan Terakhir</p><p class="sanction-desc">Teguran resmi kedua — kesempatan terakhir.</p></div>
+        </div>
+        <div class="sanction-step">
+          <div class="sanction-dot">4</div>
+          <div class="sanction-body"><p class="sanction-title">Kick</p><p class="sanction-desc">Dikeluarkan dari grup kalau pelanggaran tetap berulang.</p></div>
+        </div>
+        <div class="sanction-step">
+          <div class="sanction-dot" style="color:var(--danger); border-color:rgba(217,112,92,0.4);">5</div>
+          <div class="sanction-body"><p class="sanction-title" style="color:var(--danger);">Blacklist</p><p class="sanction-desc">Sanksi tertinggi dari Owner — permanen, untuk pelanggaran serius/berulang.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jam operasional -->
+  <div class="section">
+    <div class="section-title">
+      <i data-lucide="clock" size="17" color="#4FB0A5"></i>
+      <h2>Jam Operasional Grup</h2>
+    </div>
+    <div class="hours-grid">
+      <div class="hour-card"><div class="hour-time">07.00</div><div class="hour-label">Grup dibuka</div></div>
+      <div class="hour-card"><div class="hour-time">00.00</div><div class="hour-label">Grup ditutup (standar)</div></div>
+      <div class="hour-card"><div class="hour-time">02.00</div><div class="hour-label">Perpanjangan (kondisional, atas izin Owner)</div></div>
+    </div>
+  </div>
+
+  <div class="footer-quote">
+    <p class="motto">"Rapi Dalam Sikap, Solid Dalam Kebersamaan."</p>
+    <p class="small">Rules ini merujuk pada Buku Panduan Resmi Rapi Team, Bab V — SOP Member. Kalau ada yang kurang jelas, tanya Admin ya.</p>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>
