@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Poin & Referral — RAPI TEAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{
+  --bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+  --amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+.display{font-family:'Space Grotesk',sans-serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+button{cursor:pointer; border:none; font-family:inherit;}
+input{font-family:inherit;}
+::selection{background:rgba(232,163,61,0.35);}
+.page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+.glow{position:absolute; border-radius:999px; filter:blur(80px); opacity:0.3;}
+.glow-amber{width:300px; height:300px; background:var(--amber); top:-70px; left:-70px; animation:driftA 10s ease-in-out infinite;}
+.glow-teal{width:340px; height:340px; background:var(--teal); bottom:-90px; right:-80px; animation:driftB 12s ease-in-out infinite;}
+@keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,24px);}}
+@keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-26px,-18px);}}
+#app{position:relative; z-index:1; max-width:640px; margin:0 auto;}
+.header{padding:28px 20px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+@media(min-width:640px){.header{padding:28px 32px 18px;}}
+.logo-box{width:32px;height:32px;border-radius:8px;background:var(--amber);display:flex;align-items:center;justify-content:center; flex-shrink:0;}
+.brand-title{font-size:19px; font-weight:700; letter-spacing:-0.02em; margin:0;}
+.brand-sub{color:var(--muted); font-size:12px; margin:2px 0 0 40px;}
+.btn-back{display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text); border:1px solid var(--line); background:var(--surface); font-family:'Space Grotesk',sans-serif; text-decoration:none; transition:background .15s;}
+.btn-back:hover{background:var(--surface2);}
+.section{padding:24px 20px; animation:fadeUp .4s ease both;}
+@media(min-width:640px){.section{padding:24px 32px;}}
+.card{border-radius:16px; padding:18px; background:var(--surface); border:1px solid var(--line); margin-bottom:14px;}
+.field-label{color:var(--muted); font-size:12px; display:block; margin-bottom:6px;}
+.input{width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:8px; font-size:14px; outline:none; transition:border-color .15s;}
+.input:focus{border-color:var(--amber);}
+.btn-amber{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:500; background:var(--amber); color:var(--bg); font-family:'Space Grotesk',sans-serif; transition:transform .12s, filter .12s; width:100%; margin-top:6px;}
+.btn-amber:hover{filter:brightness(1.08);} .btn-amber:active{transform:scale(0.98);}
+.btn-amber:disabled{opacity:0.5; cursor:not-allowed;}
+.btn-teal{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 14px; border-radius:8px; font-size:13px; font-weight:500; background:var(--teal); color:var(--bg); font-family:'Space Grotesk',sans-serif; transition:filter .12s, transform .12s;}
+.btn-teal:hover{filter:brightness(1.08);} .btn-teal:active{transform:scale(0.96);}
+.msg{font-size:12.5px; margin:8px 0 0; padding:8px 10px; border-radius:8px;}
+.msg-ok{background:rgba(79,176,165,0.14); color:var(--teal);}
+.msg-err{background:rgba(217,112,92,0.14); color:var(--danger);}
+.section-title{display:flex; align-items:center; gap:8px; margin:0 0 12px;}
+.section-title h2{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0;}
+.empty-note{color:var(--muted); font-size:12.5px; text-align:center; padding:20px 0;}
+.hidden{display:none !important;}
+.poin-big{font-family:'JetBrains Mono',monospace; font-size:40px; font-weight:600; color:var(--amber); margin:0; line-height:1;}
+.poin-label{color:var(--muted); font-size:12px; margin:4px 0 0;}
+.link-row{display:flex; gap:8px; margin-top:12px;}
+.link-box{flex:1; background:var(--surface2); border:1px solid var(--line); color:var(--teal); padding:10px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; overflow-x:auto; white-space:nowrap;}
+.progress-track{width:100%; height:8px; border-radius:999px; background:var(--surface2); overflow:hidden; margin:10px 0;}
+.progress-fill{height:100%; background:var(--amber); border-radius:999px; transition:width .3s ease;}
+.rank-row{display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; background:var(--surface2); border:1px solid var(--line); margin-bottom:8px;}
+.rank-num{width:26px; height:26px; border-radius:999px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--teal); flex-shrink:0;}
+.rank-num.gold{background:var(--amber); color:var(--bg); border-color:var(--amber);}
+.rank-wa{font-family:'JetBrains Mono',monospace; font-size:12.5px; flex:1;}
+.rank-poin{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--amber); font-weight:600;}
+@keyframes fadeUp{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+.loading{color:var(--muted); font-size:12.5px; text-align:center; padding:20px 0;}
+</style>
+</head>
+<body>
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+<div id="app">
+
+<div class="header">
+  <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="logo-box"><i data-lucide="gem" size="18" color="#0F1B22"></i></div>
+      <h1 class="display brand-title">Poin & Referral</h1>
+    </div>
+    <p class="brand-sub">Ajak teman, kumpulin poin, jadi Admin</p>
+  </div>
+  <a class="btn-back" href="index.html"><i data-lucide="arrow-left" size="14"></i> Kembali</a>
+</div>
+
+<div class="section">
+
+  <!-- CEK POIN -->
+  <div class="card" id="loginCard">
+    <div class="section-title"><i data-lucide="phone" size="16" color="#E8A33D"></i><h2>Cek Poin Kamu</h2></div>
+    <label class="field-label">Nomor WhatsApp kamu (yang dipakai daftar)</label>
+    <input class="input" id="waInput" type="tel" placeholder="08xxxxxxxxxx" />
+    <button class="btn-amber" id="btnCek" onclick="cekPoin()"><i data-lucide="search" size="15"></i> Cek Poin</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <!-- DASHBOARD POIN -->
+  <div class="card hidden" id="dashCard">
+    <div style="text-align:center;">
+      <p class="poin-big mono" id="poinValue">0</p>
+      <p class="poin-label">Poin kamu saat ini</p>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <p style="color:var(--muted); font-size:11.5px; text-align:center; margin:0 0 4px;" id="progressNote"></p>
+
+    <button class="btn-amber" id="btnTukar" onclick="tukarPoin()"><i data-lucide="crown" size="15"></i> Tukar Poin Jadi Admin</button>
+    <div id="tukarMsg"></div>
+  </div>
+
+  <!-- LINK REFERRAL -->
+  <div class="card hidden" id="linkCard">
+    <div class="section-title"><i data-lucide="share-2" size="16" color="#4FB0A5"></i><h2>Link Referral Kamu</h2></div>
+    <p style="color:var(--muted); font-size:12.5px; margin:0 0 4px;">Share link ini bareng link grup WA. Tiap orang yang gabung & isi Intro lewat link ini, kamu dapet +1 poin otomatis.</p>
+    <div class="link-row">
+      <div class="link-box" id="refLink"></div>
+      <button class="btn-teal" id="btnCopy" onclick="copyLink()"><i data-lucide="copy" size="14"></i></button>
+    </div>
+    <button class="btn-teal" style="width:100%; margin-top:10px;" onclick="shareWA()"><i data-lucide="message-circle" size="14"></i> Share ke WhatsApp</button>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="card">
+    <div class="section-title"><i data-lucide="trophy" size="16" color="#E8A33D"></i><h2>Papan Peringkat</h2></div>
+    <div id="leaderboard" class="loading">Memuat data...</div>
+  </div>
+
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, updateDoc, increment,
+  collection, query, orderBy, limit, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB674t6fiJ8HT9ENfeS3Vzv-BSGQTQ-3BI",
+  authDomain: "rapi-dev-43ddf.firebaseapp.com",
+  projectId: "rapi-dev-43ddf",
+  storageBucket: "rapi-dev-43ddf.firebasestorage.app",
+  messagingSenderId: "392684134756",
+  appId: "1:392684134756:web:6ef9ed85f4fb29db29da71"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const membersCol = collection(db, "rapiTeamMembers");
+
+const POIN_ADMIN = 20; // ganti sesuai kebutuhan
+const BASE_URL = "https://rapi-team-panel.vercel.app";
+
+let currentWaId = null;
+
+function normalizeWa(raw) {
+  let n = raw.replace(/[^0-9]/g, "");
+  if (n.startsWith("0")) n = "62" + n.slice(1);
+  if (n.startsWith("8")) n = "62" + n;
+  return n;
+}
+function esc(str) {
+  return String(str ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+}
+function showMsg(elId, text, ok) {
+  document.getElementById(elId).innerHTML = `<div class="msg ${ok ? 'msg-ok' : 'msg-err'}">${esc(text)}</div>`;
+}
+
+window.cekPoin = async function () {
+  const raw = document.getElementById("waInput").value.trim();
+  const btn = document.getElementById("btnCek");
+  if (!raw || raw.replace(/[^0-9]/g, "").length < 9) {
+    showMsg("loginMsg", "Nomor WA belum valid.", false);
+    return;
+  }
+  const waId = normalizeWa(raw);
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" size="15"></i> Mengecek...`;
+  if (window.lucide) lucide.createIcons();
+
+  try {
+    const ref = doc(membersCol, waId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showMsg("loginMsg", "Nomor kamu belum terdaftar di Rapi Team.", false);
+    } else {
+      currentWaId = waId;
+      renderDashboard(snap.data());
+      document.getElementById("loginMsg").innerHTML = "";
+    }
+  } catch (e) {
+    showMsg("loginMsg", "Gagal cek: " + e.message, false);
+  }
+  btn.disabled = false;
+  btn.innerHTML = `<i data-lucide="search" size="15"></i> Cek Poin`;
+  if (window.lucide) lucide.createIcons();
+};
+
+function renderDashboard(data) {
+  const poin = data.poin || 0;
+  document.getElementById("dashCard").classList.remove("hidden");
+  document.getElementById("linkCard").classList.remove("hidden");
+  document.getElementById("poinValue").textContent = poin;
+
+  const pct = Math.min(100, Math.round((poin / POIN_ADMIN) * 100));
+  document.getElementById("progressFill").style.width = pct + "%";
+
+  const btnTukar = document.getElementById("btnTukar");
+  if (data.role === "admin") {
+    document.getElementById("progressNote").textContent = "Kamu sudah jadi Admin 👑";
+    btnTukar.disabled = true;
+    btnTukar.innerHTML = `<i data-lucide="check" size="15"></i> Sudah Admin`;
+  } else if (data.request_naik_admin) {
+    document.getElementById("progressNote").textContent = "Permintaan naik Admin lagi ditinjau Owner.";
+    btnTukar.disabled = true;
+    btnTukar.innerHTML = `<i data-lucide="clock" size="15"></i> Menunggu Persetujuan`;
+  } else {
+    document.getElementById("progressNote").textContent = `${poin}/${POIN_ADMIN} poin buat bisa tukar jadi Admin`;
+    btnTukar.disabled = poin < POIN_ADMIN;
+    btnTukar.innerHTML = `<i data-lucide="crown" size="15"></i> Tukar Poin Jadi Admin`;
+  }
+  if (window.lucide) lucide.createIcons();
+
+  const link = `${BASE_URL}/intro-form.html?ref=${currentWaId}`;
+  document.getElementById("refLink").textContent = link;
+}
+
+window.tukarPoin = async function () {
+  if (!currentWaId) return;
+  const btn = document.getElementById("btnTukar");
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(membersCol, currentWaId), {
+      request_naik_admin: true,
+      request_time: serverTimestamp()
+    });
+    showMsg("tukarMsg", "Permintaan terkirim! Tunggu persetujuan Owner ya.", true);
+    const snap = await getDoc(doc(membersCol, currentWaId));
+    renderDashboard(snap.data());
+  } catch (e) {
+    showMsg("tukarMsg", "Gagal kirim permintaan: " + e.message, false);
+    btn.disabled = false;
+  }
+};
+
+window.copyLink = async function () {
+  const text = document.getElementById("refLink").textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById("btnCopy");
+    btn.innerHTML = `<i data-lucide="check" size="14"></i>`;
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => { btn.innerHTML = `<i data-lucide="copy" size="14"></i>`; if (window.lucide) lucide.createIcons(); }, 1200);
+  } catch (e) {}
+};
+
+window.shareWA = function () {
+  const link = document.getElementById("refLink").textContent;
+  const text = `Yuk gabung Rapi Team! Isi intro lewat link ini biar aku dapet poin ya 🙏\n${link}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+};
+
+// Leaderboard realtime
+const lbQuery = query(membersCol, orderBy("poin", "desc"), limit(10));
+onSnapshot(lbQuery, (snap) => {
+  const el = document.getElementById("leaderboard");
+  const rows = [];
+  snap.forEach(d => {
+    const data = d.data();
+    if ((data.poin || 0) > 0) rows.push({ wa: d.id, poin: data.poin || 0 });
+  });
+  if (rows.length === 0) {
+    el.innerHTML = `<div class="empty-note">Belum ada yang punya poin. Jadilah yang pertama! 🚀</div>`;
+    return;
+  }
+  el.innerHTML = rows.map((r, i) => `
+    <div class="rank-row">
+      <div class="rank-num ${i === 0 ? 'gold' : ''}">${i + 1}</div>
+      <p class="rank-wa">${esc(r.wa)}</p>
+      <p class="rank-poin">${r.poin} poin</p>
+    </div>
+  `).join("");
+}, (err) => {
+  document.getElementById("leaderboard").innerHTML = `<div class="empty-note">Gagal memuat: ${esc(err.message)}</div>`;
+});
+
+if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>
