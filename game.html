@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rapi Team Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{
+--bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+--amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+.display{font-family:'Space Grotesk',sans-serif;}
+a{text-decoration:none; color:inherit;}
+::selection{background:rgba(232,163,61,0.35);}
+.page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+.glow{position:absolute; border-radius:999px; filter:blur(90px); opacity:0.32;}
+.glow-amber{width:340px; height:340px; background:var(--amber); top:-90px; left:-90px; animation:driftA 11s ease-in-out infinite;}
+.glow-teal{width:380px; height:380px; background:var(--teal); bottom:-100px; right:-90px; animation:driftB 13s ease-in-out infinite;}
+@keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,26px);}}
+@keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-28px,-20px);}}
+#app{position:relative; z-index:1; max-width:520px; margin:0 auto;}
+.header{padding:44px 20px 8px; text-align:center;}
+.badge-live{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--teal); background:rgba(79,176,165,0.14); padding:5px 12px; border-radius:999px; margin-bottom:16px;}
+.dot{width:6px; height:6px; border-radius:999px; background:var(--teal); animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.3;}}
+.hero-icon{width:64px;height:64px;border-radius:18px;background:rgba(232,163,61,0.16); display:flex; align-items:center; justify-content:center; margin:0 auto 18px;}
+.hero-title{font-size:clamp(26px,7vw,34px); font-weight:800; letter-spacing:-0.02em; margin:0 0 10px; line-height:1.15;}
+.hero-title span{color:var(--amber);}
+.hero-sub{color:var(--muted); font-size:13.5px; max-width:380px; margin:0 auto; line-height:1.7;}
+.section{padding:28px 20px 40px;}
+.level-strip{display:flex; gap:8px; margin-bottom:20px;}
+.level-chip{flex:1; text-align:center; padding:10px 4px; border-radius:10px; background:var(--surface); border:1px solid var(--line);}
+.level-chip .lc-name{font-size:11px; font-weight:700; margin:0 0 2px;}
+.level-chip .lc-range{font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+.lc-pemula{color:var(--muted);} .lc-aktif{color:var(--teal);} .lc-senior{color:var(--amber);} .lc-legend{color:var(--danger);}
+.howto-card{border-radius:16px; padding:18px; background:var(--surface); border:1px solid var(--line); margin-bottom:24px; animation:fadeUp .4s ease both;}
+.howto-title{font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:0 0 14px;}
+.howto-item{display:flex; gap:12px; align-items:flex-start; margin-bottom:14px;}
+.howto-item:last-child{margin-bottom:0;}
+.howto-num{width:26px; height:26px; border-radius:8px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--amber); flex-shrink:0; font-family:'JetBrains Mono',monospace;}
+.howto-text{font-size:13px; line-height:1.55; padding-top:3px;}
+.howto-text b{color:var(--text);}
+.menu-grid{display:flex; flex-direction:column; gap:12px;}
+.menu-card{display:flex; align-items:center; gap:14px; padding:16px; border-radius:14px; background:var(--surface); border:1px solid var(--line); transition:border-color .15s, transform .12s; animation:fadeUp .4s ease both;}
+.menu-card:active{transform:scale(0.98);}
+.menu-card.primary{border-color:var(--amber); background:linear-gradient(135deg, rgba(232,163,61,0.14), var(--surface));}
+.menu-icon{width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.menu-icon.amber{background:rgba(232,163,61,0.16);}
+.menu-icon.teal{background:rgba(79,176,165,0.16);}
+.menu-icon.muted{background:rgba(143,163,171,0.14);}
+.menu-body{flex:1; min-width:0;}
+.menu-title{font-size:14.5px; font-weight:700; margin:0 0 2px;}
+.menu-desc{font-size:12px; color:var(--muted); line-height:1.4; margin:0;}
+.chevron{color:var(--muted); flex-shrink:0;}
+@keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+.footer-note{text-align:center; font-size:11.5px; color:var(--muted); margin-top:28px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+<div id="app">
+<div class="header">
+<div class="badge-live"><span class="dot"></span> RAPI TEAM QUEST</div>
+<div class="hero-icon"><i data-lucide="rocket" size="30" color="#E8A33D"></i></div>
+<h1 class="display hero-title">Kumpulin Poin,<br>Naik <span>Level!</span></h1>
+<p class="hero-sub">Makin aktif di Rapi Team, makin banyak poin. Makin banyak poin, makin tinggi levelmu di papan peringkat.</p>
+</div>
+
+<div class="section">
+<div class="level-strip">
+<div class="level-chip"><p class="lc-name lc-pemula">Pemula</p><p class="lc-range">0-49</p></div>
+<div class="level-chip"><p class="lc-name lc-aktif">Aktif</p><p class="lc-range">50-149</p></div>
+<div class="level-chip"><p class="lc-name lc-senior">Senior</p><p class="lc-range">150-349</p></div>
+<div class="level-chip"><p class="lc-name lc-legend">Legend</p><p class="lc-range">350+</p></div>
+</div>
+
+<div class="howto-card">
+<p class="howto-title">Cara Main</p>
+<div class="howto-item">
+<div class="howto-num">1</div>
+<div class="howto-text">Kalau belum jadi anggota, <b>daftar dulu</b> lewat menu di bawah.</div>
+</div>
+<div class="howto-item">
+<div class="howto-num">2</div>
+<div class="howto-text">Ambil <b>link referral pribadi</b> kamu, lalu sebar ke teman.</div>
+</div>
+<div class="howto-item">
+<div class="howto-num">3</div>
+<div class="howto-text">Tiap teman yang daftar lewat link kamu = <b>+20 poin</b> otomatis.</div>
+</div>
+<div class="howto-item">
+<div class="howto-num">4</div>
+<div class="howto-text">Admin juga bisa kasih poin bonus kalau kamu aktif ikut event.</div>
+</div>
+</div>
+
+<div class="menu-grid">
+<a class="menu-card primary" href="cek-poin.html">
+<div class="menu-icon amber"><i data-lucide="gift" size="20" color="#E8A33D"></i></div>
+<div class="menu-body">
+<p class="menu-title">Cek Poin & Link Referral</p>
+<p class="menu-desc">Lihat poinmu sekarang & ambil link buat ngajak teman</p>
+</div>
+<i data-lucide="chevron-right" size="18" class="chevron"></i>
+</a>
+
+<a class="menu-card" href="leaderboard.html">
+<div class="menu-icon teal"><i data-lucide="trophy" size="20" color="#4FB0A5"></i></div>
+<div class="menu-body">
+<p class="menu-title">Papan Peringkat</p>
+<p class="menu-desc">Lihat siapa yang paling top di Rapi Team</p>
+</div>
+<i data-lucide="chevron-right" size="18" class="chevron"></i>
+</a>
+
+<a class="menu-card" href="daftar.html">
+<div class="menu-icon muted"><i data-lucide="user-plus" size="20" color="#8FA3AB"></i></div>
+<div class="menu-body">
+<p class="menu-title">Belum Jadi Anggota?</p>
+<p class="menu-desc">Daftar dulu di sini buat mulai main</p>
+</div>
+<i data-lucide="chevron-right" size="18" class="chevron"></i>
+</a>
+</div>
+
+<p class="footer-note">Rapi Team Quest — makin rame, makin seru 🚀</p>
+</div>
+</div>
+<script>
+if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>
