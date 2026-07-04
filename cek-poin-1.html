@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cek Poin & Referral — RAPI TEAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{
+--bg:#0F1B22; --surface:#16272F; --surface2:#1D323B; --line:#2A3E46;
+--amber:#E8A33D; --teal:#4FB0A5; --text:#EDE7DA; --muted:#8FA3AB; --danger:#D9705C;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh;}
+.display{font-family:'Space Grotesk',sans-serif;}
+button{cursor:pointer; border:none; font-family:inherit;}
+input{font-family:inherit;}
+.page-glow{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+.glow{position:absolute; border-radius:999px; filter:blur(80px); opacity:0.3;}
+.glow-amber{width:300px; height:300px; background:var(--amber); top:-70px; left:-70px; animation:driftA 10s ease-in-out infinite;}
+.glow-teal{width:340px; height:340px; background:var(--teal); bottom:-90px; right:-80px; animation:driftB 12s ease-in-out infinite;}
+@keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,24px);}}
+@keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-26px,-18px);}}
+#app{position:relative; z-index:1; max-width:520px; margin:0 auto;}
+.header{padding:32px 20px 8px; text-align:center;}
+.hero-icon{width:52px;height:52px;border-radius:14px;background:rgba(232,163,61,0.16); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+.hero-title{font-size:clamp(20px,5.6vw,26px); font-weight:700; letter-spacing:-0.02em; margin:0 0 8px;}
+.hero-sub{color:var(--muted); font-size:13px; max-width:400px; margin:0 auto; line-height:1.6;}
+.section{padding:24px 20px 40px;}
+.card{border-radius:16px; padding:20px; background:var(--surface); border:1px solid var(--line); margin-bottom:16px;}
+.field-label{color:var(--muted); font-size:12px; display:block; margin-bottom:6px;}
+.field{margin-bottom:14px;}
+.input{width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:8px; font-size:14px; outline:none; transition:border-color .15s;}
+.input:focus{border-color:var(--amber);}
+.btn-amber{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:12px 18px; border-radius:8px; font-size:14px; font-weight:600; background:var(--amber); color:var(--bg); font-family:'Space Grotesk',sans-serif; width:100%;}
+.btn-amber:disabled{opacity:0.6; cursor:not-allowed;}
+.msg{font-size:13px; margin-top:10px; padding:10px 12px; border-radius:8px; line-height:1.5;}
+.msg-ok{background:rgba(79,176,165,0.14); color:var(--teal);}
+.msg-err{background:rgba(217,112,92,0.14); color:var(--danger);}
+.result{display:none;}
+.result.show{display:block;}
+.stat-row{display:flex; gap:10px; margin-bottom:16px;}
+.stat-box{flex:1; background:var(--surface2); border-radius:12px; padding:14px; text-align:center;}
+.stat-num{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--amber);}
+.stat-label{font-size:11px; color:var(--muted); margin-top:2px;}
+.badge{display:inline-block; font-size:11px; padding:3px 10px; border-radius:999px; font-weight:600; margin-top:4px;}
+.badge-pemula{background:rgba(143,163,171,0.18); color:var(--muted);}
+.badge-aktif{background:rgba(79,176,165,0.16); color:var(--teal);}
+.badge-senior{background:rgba(232,163,61,0.16); color:var(--amber);}
+.badge-legend{background:rgba(217,112,92,0.16); color:var(--danger);}
+.ref-box{background:var(--surface2); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text); word-break:break-all; margin-bottom:10px;}
+.btn-copy{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px; border-radius:8px; font-size:13px; font-weight:600; background:var(--surface2); color:var(--text); border:1px solid var(--line); width:100%;}
+.btn-copy:hover{border-color:var(--amber);}
+.hint{font-size:12px; color:var(--muted); line-height:1.6; margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="page-glow"><div class="glow glow-amber"></div><div class="glow glow-teal"></div></div>
+<div id="app">
+<div class="header">
+<div class="hero-icon"><i data-lucide="gift" size="24" color="#E8A33D"></i></div>
+<h1 class="display hero-title">Cek Poin & Ajak Teman</h1>
+<p class="hero-sub">Ajak teman join pakai link pribadi kamu, tiap satu orang daftar lewat link itu, kamu dapat +20 poin.</p>
+</div>
+<div class="section">
+<div class="card">
+<div class="field">
+<label class="field-label">Nomor WhatsApp kamu</label>
+<input class="input" id="f_wa" type="tel" placeholder="08xxxxxxxxxx" />
+</div>
+<button class="btn-amber" id="btnCari" onclick="cekPoin()"><i data-lucide="search" size="15"></i> Cek Poin Saya</button>
+<div id="searchMsg"></div>
+</div>
+
+<div class="card result" id="resultCard">
+<div class="stat-row">
+<div class="stat-box">
+<div class="stat-num" id="rPoints">0</div>
+<div class="stat-label">Total Poin</div>
+</div>
+<div class="stat-box">
+<div class="stat-num" id="rReferrals">0</div>
+<div class="stat-label">Teman Diundang</div>
+</div>
+</div>
+<div style="text-align:center; margin-bottom:16px;">
+<span class="badge" id="rBadge">Pemula</span>
+</div>
+<label class="field-label">Link Referral Kamu</label>
+<div class="ref-box" id="rLink">-</div>
+<button class="btn-copy" id="btnCopy" onclick="copyLink()"><i data-lucide="copy" size="14"></i> Copy Link</button>
+<a class="btn-amber" id="btnShare" href="#" target="_blank" style="margin-top:10px; text-decoration:none;"><i data-lucide="share-2" size="15"></i> Bagikan ke WhatsApp</a>
+<p class="hint">Tombol di atas otomatis buka WhatsApp dengan pesan siap kirim: link join grup + link referral kamu jadi satu. Begitu temanmu join grup & daftar lewat link itu, poin kamu otomatis nambah.</p>
+</div>
+</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getFirestore, doc, getDoc, collection, query, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyB674t6fiJ8HT9ENfeS3Vzv-BSGQTQ-3BI",
+authDomain: "rapi-dev-43ddf.firebaseapp.com",
+projectId: "rapi-dev-43ddf",
+storageBucket: "rapi-dev-43ddf.firebasestorage.app",
+messagingSenderId: "392684134756",
+appId: "1:392684134756:web:6ef9ed85f4fb29db29da71"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const GROUP_INVITE_LINK = "https://chat.whatsapp.com/IIov8GSVNlF5PCHjWCqbwn";
+
+function normalizeWa(raw) {
+let n = raw.replace(/[^0-9]/g, "");
+if (n.startsWith("0")) n = "62" + n.slice(1);
+if (n.startsWith("8")) n = "62" + n;
+return n;
+}
+
+function esc(str) {
+return String(str ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+}
+
+function showMsg(text, ok) {
+document.getElementById("searchMsg").innerHTML = `<div class="msg ${ok ? 'msg-ok' : 'msg-err'}">${esc(text)}</div>`;
+}
+
+function getLevel(points) {
+if (points >= 350) return { name: "Legend", cls: "legend" };
+if (points >= 150) return { name: "Senior", cls: "senior" };
+if (points >= 50) return { name: "Aktif", cls: "aktif" };
+return { name: "Pemula", cls: "pemula" };
+}
+
+window.cekPoin = async function () {
+const waRaw = document.getElementById("f_wa").value.trim();
+if (!waRaw || waRaw.replace(/[^0-9]/g, "").length < 9) { showMsg("Nomor WA belum valid.", false); return; }
+
+const waId = normalizeWa(waRaw);
+const btn = document.getElementById("btnCari");
+btn.disabled = true;
+document.getElementById("searchMsg").innerHTML = "";
+document.getElementById("resultCard").classList.remove("show");
+
+try {
+const ref = doc(db, "rapiTeamMembers", waId);
+const snap = await getDoc(ref);
+
+if (!snap.exists()) {
+showMsg("Nomor ini belum terdaftar sebagai anggota.", false);
+btn.disabled = false;
+return;
+}
+
+const data = snap.data();
+const points = data.points || 0;
+const lvl = getLevel(points);
+
+let referralCount = 0;
+try {
+const q = query(collection(db, "rapiTeamMembers"), where("referredBy", "==", waId));
+const countSnap = await getCountFromServer(q);
+referralCount = countSnap.data().count;
+} catch (e) {
+console.error("Gagal hitung referral:", e);
+}
+
+document.getElementById("rPoints").textContent = points;
+document.getElementById("rReferrals").textContent = referralCount;
+document.getElementById("rBadge").textContent = lvl.name;
+document.getElementById("rBadge").className = "badge badge-" + lvl.cls;
+
+const link = `${window.location.origin}/daftar.html?ref=${waId}`;
+document.getElementById("rLink").textContent = link;
+window.currentRefLink = link;
+
+const shareMsg = `Halo! Yuk join Rapi Team 🚀\n\nGabung grup dulu di sini:\n${GROUP_INVITE_LINK}\n\nAbis join, daftar juga di link ini biar resmi jadi anggota:\n${link}`;
+document.getElementById("btnShare").href = `https://wa.me/?text=${encodeURIComponent(shareMsg)}`;
+
+document.getElementById("resultCard").classList.add("show");
+btn.disabled = false;
+} catch (e) {
+showMsg("Gagal memuat data: " + e.message, false);
+btn.disabled = false;
+}
+};
+
+window.copyLink = function () {
+if (!window.currentRefLink) return;
+navigator.clipboard.writeText(window.currentRefLink).then(() => {
+const btn = document.getElementById("btnCopy");
+const original = btn.innerHTML;
+btn.innerHTML = `<i data-lucide="check" size="14"></i> Tersalin!`;
+if (window.lucide) lucide.createIcons();
+setTimeout(() => { btn.innerHTML = original; if (window.lucide) lucide.createIcons(); }, 1800);
+});
+};
+
+if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>
