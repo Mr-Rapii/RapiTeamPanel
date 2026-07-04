@@ -1,5 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/reminder-intro", "schedule": "0 * * * *" }
+    { "path": "/api/cron/reminder-intro", "schedule": "0 2 * * *" }
   ]
 }
